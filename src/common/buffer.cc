@@ -364,7 +364,7 @@ static ceph::spinlock debug_lock;
       p._raw->nref++;
       bdout << "ptr " << this << " get " << _raw << bendl;
     }
-    buffer::raw *raw = p._raw; 
+    buffer::raw *raw = p._raw;
     release();
     if (raw) {
       _raw = raw;
@@ -859,18 +859,18 @@ static ceph::spinlock debug_lock;
     while (len > 0) {
       if (p == ls->end())
 	throw end_of_buffer();
-      
+
       unsigned howmuch = p->length() - p_off;
       if (len < howmuch)
 	howmuch = len;
       p->copy_in(p_off, howmuch, src, crc_reset);
-	
+
       src += howmuch;
       len -= howmuch;
       *this += howmuch;
     }
   }
-  
+
   void buffer::list::iterator::copy_in(unsigned len, const list& otherl)
   {
     if (p == ls->end())
@@ -1152,7 +1152,7 @@ static ceph::spinlock debug_lock;
   {
     return rebuild_aligned_size_and_memory(align, align);
   }
-  
+
   bool buffer::list::rebuild_aligned_size_and_memory(unsigned align_size,
 						    unsigned align_memory,
 						    unsigned max_buffers)
@@ -1175,7 +1175,7 @@ static ceph::spinlock debug_lock;
         p_prev = p++;
         continue;
       }
-      
+
       // consolidate unaligned items, until we get something that is sized+aligned
       list unaligned;
       unsigned offset = 0;
@@ -1214,7 +1214,7 @@ static ceph::spinlock debug_lock;
     }
     return had_to_rebuild;
   }
-  
+
   bool buffer::list::rebuild_page_aligned()
   {
    return  rebuild_aligned(CEPH_PAGE_SIZE);
@@ -1422,7 +1422,7 @@ static ceph::spinlock debug_lock;
     _num += 1;
     _buffers.push_front(*bp.release());
   }
-  
+
   void buffer::list::append_zero(unsigned len)
   {
     _len += len;
@@ -1447,7 +1447,7 @@ static ceph::spinlock debug_lock;
     }
   }
 
-  
+
   /*
    * get a char
    */
@@ -1455,7 +1455,7 @@ static ceph::spinlock debug_lock;
   {
     if (n >= _len)
       throw end_of_buffer();
-    
+
     for (const auto& node : _buffers) {
       if (n >= node.length()) {
 	n -= node.length();
@@ -1513,7 +1513,7 @@ static ceph::spinlock debug_lock;
       ++curbuf;
     }
     ceph_assert(len == 0 || curbuf != std::cend(other._buffers));
-    
+
     while (len > 0) {
       // partial?
       if (off + len < curbuf->length()) {
@@ -1523,7 +1523,7 @@ static ceph::spinlock debug_lock;
         _num += 1;
 	break;
       }
-      
+
       // through end
       //cout << "copying end (all?) of " << *curbuf << std::endl;
       unsigned howmuch = curbuf->length() - off;
@@ -1547,7 +1547,7 @@ static ceph::spinlock debug_lock;
 
     ceph_assert(len > 0);
     //cout << "splice off " << off << " len " << len << " ... mylen = " << length() << std::endl;
-      
+
     // skip off
     auto curbuf = std::begin(_buffers);
     auto curbuf_prev = _buffers.before_begin();
@@ -1564,7 +1564,7 @@ static ceph::spinlock debug_lock;
 	break;
       }
     }
-    
+
     if (off) {
       // add a reference to the front bit, insert it before curbuf (which
       // we'll lose).
@@ -1575,12 +1575,12 @@ static ceph::spinlock debug_lock;
       _num += 1;
       ++curbuf_prev;
     }
-    
+
     while (len > 0) {
       // partial or the last (appendable) one?
       if (const auto to_drop = off + len; to_drop < curbuf->length()) {
 	//cout << "keeping end of " << *curbuf << ", losing first " << off+len << std::endl;
-	if (claim_by) 
+	if (claim_by)
 	  claim_by->append(*curbuf, off, len);
 	curbuf->set_offset(to_drop + curbuf->offset());    // ignore beginning big
 	curbuf->set_length(curbuf->length() - to_drop);
@@ -1592,7 +1592,7 @@ static ceph::spinlock debug_lock;
       // hose though the end
       unsigned howmuch = curbuf->length() - off;
       //cout << "discarding " << howmuch << " of " << *curbuf << std::endl;
-      if (claim_by) 
+      if (claim_by)
 	claim_by->append(*curbuf, off, howmuch);
       _len -= curbuf->length();
       if (curbuf == _carriage) {
@@ -1622,7 +1622,7 @@ static ceph::spinlock debug_lock;
       }
     }
   }
-  
+
 void buffer::list::encode_base64(buffer::list& o)
 {
   bufferptr bp(length() * 4 / 3 + 3);
@@ -1838,6 +1838,7 @@ static int do_writev(int fd, struct iovec *vec, uint64_t offset, unsigned veclen
 }
 
 #ifndef _WIN32
+// zhou: Linux write
 int buffer::list::write_fd(int fd) const
 {
   // use writev!
@@ -1922,6 +1923,7 @@ int buffer::list::write_fd(int fd, uint64_t offset) const
   return 0;
 }
 #else
+// zhou: windows write
 int buffer::list::write_fd(int fd) const
 {
   // There's no writev on Windows. WriteFileGather may be an option,
@@ -2140,7 +2142,7 @@ void buffer::list::hexdump(std::ostream &out, bool trailing_newline) const
 	out << ' ';
       out << "   ";
     }
-    
+
     out << "  |";
     for (i=0; i<per && o+i<length(); i++) {
       char c = (*this)[o+i];

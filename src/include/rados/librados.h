@@ -437,7 +437,7 @@ CEPH_RADOS_API int rados_create(rados_t *cluster, const char * const id);
 /**
  * Extended version of rados_create.
  *
- * Like rados_create, but 
+ * Like rados_create, but
  * 1) don't assume 'client\.'+id; allow full specification of name
  * 2) allow specification of cluster name
  * 3) flags for future expansion
@@ -664,7 +664,7 @@ CEPH_RADOS_API int rados_cluster_fsid(rados_t cluster, char *buf, size_t len);
 
 /**
  * Get/wait for the most recent osdmap
- * 
+ *
  * @param cluster the cluster to shutdown
  * @returns 0 on success, negative error code on failure
  */
@@ -776,6 +776,7 @@ CEPH_RADOS_API int rados_get_min_compatible_client(rados_t cluster,
  * @param ioctx where to store the io context
  * @returns 0 on success, negative error code on failure
  */
+// zhou:
 CEPH_RADOS_API int rados_ioctx_create(rados_t cluster, const char *pool_name,
                                       rados_ioctx_t *ioctx);
 CEPH_RADOS_API int rados_ioctx_create2(rados_t cluster, int64_t pool_id,
@@ -1513,6 +1514,7 @@ CEPH_RADOS_API uint64_t rados_get_last_version(rados_ioctx_t io);
  * @param off byte offset in the object to begin writing at
  * @returns 0 on success, negative error code on failure
  */
+// zhou:
 CEPH_RADOS_API int rados_write(rados_ioctx_t io, const char *oid,
                                const char *buf, size_t len, uint64_t off);
 
@@ -4046,7 +4048,7 @@ CEPH_RADOS_API int rados_pg_command(rados_t cluster, const char *pgstr,
  */
 typedef void (*rados_log_callback_t)(void *arg,
 				     const char *line,
-				     const char *who, 
+				     const char *who,
 				     uint64_t sec, uint64_t nsec,
 				     uint64_t seq, const char *level,
 				     const char *msg);

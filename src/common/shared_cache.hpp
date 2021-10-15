@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_SHAREDCACHE_H
@@ -27,9 +27,11 @@
 #include "common/dout.h"
 #include "include/unordered_map.h"
 
+// zhou: README,
 template <class K, class V>
 class SharedLRU {
   CephContext *cct;
+
 #ifdef WITH_SEASTAR
   using VPtr = boost::local_shared_ptr<V>;
   using WeakVPtr = boost::weak_ptr<V>;
@@ -37,15 +39,18 @@ class SharedLRU {
   using VPtr = std::shared_ptr<V>;
   using WeakVPtr = std::weak_ptr<V>;
 #endif
+
   ceph::mutex lock;
   size_t max_size;
   ceph::condition_variable cond;
   unsigned size;
+
 public:
   int waiting;
 private:
   using C = std::less<K>;
   using H = std::hash<K>;
+
   ceph::unordered_map<K, typename std::list<std::pair<K, VPtr> >::iterator, H> contents;
   std::list<std::pair<K, VPtr> > lru;
 
@@ -68,6 +73,7 @@ private:
   }
 
   void lru_add(const K& key, const VPtr& val, std::list<VPtr> *to_release) {
+
     auto i = contents.find(key);
     if (i != contents.end()) {
       lru.splice(lru.begin(), lru, i->second);
@@ -97,7 +103,7 @@ private:
       cache->remove(key, ptr);
       delete ptr;
     }
-  };
+  }; // zhou: class Cleanup
 
 public:
   SharedLRU(CephContext *cct = NULL, size_t max_size = 20)
@@ -105,9 +111,9 @@ public:
       lock{ceph::make_mutex("SharedLRU::lock")},
       max_size(max_size),
       size(0), waiting(0) {
-    contents.rehash(max_size); 
+    contents.rehash(max_size);
   }
-  
+
   ~SharedLRU() {
     contents.clear();
     lru.clear();
@@ -200,6 +206,7 @@ public:
     }
   }
 
+  // zhou: set LRU length
   void set_size(size_t new_size) {
     std::list<VPtr> to_release;
     {
@@ -294,6 +301,7 @@ public:
     }
     return val;
   }
+
   VPtr lookup_or_create(const K &key) {
     VPtr val;
     std::list<VPtr> to_release;
@@ -379,6 +387,6 @@ public:
   }
 
   friend class SharedLRUTest;
-};
+}; // zhou: class SharedLRU
 
 #endif

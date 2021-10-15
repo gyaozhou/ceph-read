@@ -201,7 +201,7 @@ public:
   friend class PromoteCallback;
   friend struct PromoteFinisher;
   friend struct C_gather;
-  
+
   struct ProxyReadOp {
     OpRequestRef op;
     hobject_t soid;
@@ -281,12 +281,12 @@ public:
     ceph_tid_t objecter_tid = 0;
     OpRequestRef op;
     std::map<uint64_t, int> results;
-    std::map<uint64_t, ceph_tid_t> tids; 
+    std::map<uint64_t, ceph_tid_t> tids;
     std::map<hobject_t, std::pair<uint64_t, uint64_t>> chunks;
     uint64_t num_chunks = 0;
     object_manifest_t new_manifest;
     ObjectContextRef obc;
-    
+
 
     ManifestOp(ObjectContextRef obc, RefCountCallback* cb)
       : cb(cb), obc(obc) {}
@@ -362,14 +362,21 @@ public:
   void send_message(int to_osd, Message *m) override {
     osd->send_message_osd_cluster(to_osd, m, get_osdmap_epoch());
   }
+
+  // zhou:
   void queue_transaction(ObjectStore::Transaction&& t,
 			 OpRequestRef op) override {
     osd->store->queue_transaction(ch, std::move(t), op);
   }
+
+  // zhou: derived from class PGBackend::Listener::queue_transactions()
   void queue_transactions(std::vector<ObjectStore::Transaction>& tls,
 			  OpRequestRef op) override {
+    // zhou: derived from PG.osd,
+    //       ObjectStore::queue_transaction(), e.g. BlueStore::queue_transactions()
     osd->store->queue_transactions(ch, tls, op, NULL);
   }
+
   epoch_t get_interval_start_epoch() const override {
     return info.history.same_interval_since;
   }
@@ -810,7 +817,8 @@ public:
       }
       return -1ull;
     }
-  };
+  }; // zhou: struct OpContext {}
+
   using OpContextUPtr = std::unique_ptr<OpContext>;
   friend struct OpContext;
 
@@ -890,7 +898,7 @@ public:
 	//generic_dout(0) << "deleting " << this << dendl;
       }
     }
-  };
+  }; // zhou: class RepGather
 
 
 protected:
@@ -1471,7 +1479,7 @@ protected:
   ObjectContextRef get_prev_clone_obc(ObjectContextRef obc);
   bool recover_adjacent_clones(ObjectContextRef obc, OpRequestRef op);
   snapid_t do_recover_adjacent_clones(ObjectContextRef obc, OpRequestRef op);
-  void get_adjacent_clones(ObjectContextRef src_obc, 
+  void get_adjacent_clones(ObjectContextRef src_obc,
 			   ObjectContextRef& _l, ObjectContextRef& _g);
   bool inc_refcount_by_set(OpContext* ctx, object_manifest_t& tgt,
 			   OSDOp& osd_op);
@@ -1945,12 +1953,12 @@ public:
     ObjectContextRef obc,
     PGTransaction *t,
     const std::string &key);
-  /** 
-   * getattr_maybe_cache 
+  /**
+   * getattr_maybe_cache
    *
-   * Populates val (if non-null) with the value of the attr with the specified key. 
-   * Returns -ENOENT if object does not exist, -ENODATA if the object exists, 
-   * but the specified key does not. 
+   * Populates val (if non-null) with the value of the attr with the specified key.
+   * Returns -ENOENT if object does not exist, -ENODATA if the object exists,
+   * but the specified key does not.
    */
   int getattr_maybe_cache(
     ObjectContextRef obc,
@@ -1967,7 +1975,7 @@ public:
 
 private:
   DynamicPerfStats m_dynamic_perf_stats;
-};
+}; // zhou: class PrimaryLogPG
 
 inline ostream& operator<<(ostream& out, const PrimaryLogPG::RepGather& repop)
 {

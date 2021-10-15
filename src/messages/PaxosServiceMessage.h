@@ -6,6 +6,7 @@
 #include "msg/Message.h"
 #include "mon/Session.h"
 
+// zhou: a message category, used for ???
 class PaxosServiceMessage : public Message {
 public:
   version_t version;
@@ -54,6 +55,6 @@ public:
   }
 
   std::string_view get_type_name() const override { return "PaxosServiceMessage"; }
-};
+}; // zhou: class PaxosServiceMessage
 
 #endif

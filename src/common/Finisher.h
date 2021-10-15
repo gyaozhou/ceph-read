@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_FINISHER_H
@@ -36,6 +36,7 @@ enum {
  * representing callbacks, in a dedicated worker thread. Enqueuing
  * contexts to complete is thread-safe.
  */
+// zhou: callback function execution within thread "finisher_thread"
 class Finisher {
   CephContext *cct;
   ceph::mutex finisher_lock; ///< Protects access to queues and finisher_running.
@@ -167,7 +168,7 @@ class Finisher {
       delete logger;
     }
   }
-};
+}; // zhou: class Finisher
 
 /// Context that is completed asynchronously on the supplied finisher.
 class C_OnFinisher : public Context {

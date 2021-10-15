@@ -14,7 +14,7 @@
   * etc., because we don't send writes down to disk until after
   * replicas ack.
   */
-
+// zhou: used in memory
 struct SnapSetContext {
   hobject_t oid;
   SnapSet snapset;
@@ -36,6 +36,7 @@ inline std::ostream& operator<<(std::ostream& out, const SnapSetContext& ssc)
 struct ObjectContext;
 typedef std::shared_ptr<ObjectContext> ObjectContextRef;
 
+// zhou:
 struct ObjectContext {
   ObjectState obs;
 
@@ -191,6 +192,7 @@ public:
   bool blocked;
   bool requeue_scrub_on_unblock;    // true if we need to requeue scrub on unblock
 };
+// zhou: struct ObjectContext {}
 
 inline std::ostream& operator<<(std::ostream& out, const ObjectState& obs)
 {

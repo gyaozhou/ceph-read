@@ -137,6 +137,8 @@ AsyncConnection::AsyncConnection(CephContext *cct, AsyncMessenger *m, DispatchQu
   tick_handler = new C_tick_wakeup(this);
   // double recv_max_prefetch see "read_until"
   recv_buf = new char[2*recv_max_prefetch];
+
+  // zhou: define protocol version
   if (local) {
     protocol = std::unique_ptr<Protocol>(new LoopbackProtocolV1(this));
   } else if (m2) {

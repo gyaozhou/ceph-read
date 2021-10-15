@@ -13,6 +13,7 @@ class ProgressContext;
 
 namespace operation {
 
+// zhou: README,
 template <typename ImageCtxT = ImageCtx>
 class TrimRequest : public AsyncRequest<ImageCtxT>
 {

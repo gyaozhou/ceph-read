@@ -234,6 +234,7 @@ enum {
 #define META_POOL_ID ((uint64_t)-1ull)
 using bptr_c_it_t = buffer::ptr::const_iterator;
 
+// zhou: README,
 class BlueStore : public ObjectStore,
 		  public md_config_obs_t {
   // -----------------------------------------------------
@@ -251,6 +252,7 @@ public:
   void _set_compression();
   void _set_throttle_params();
   int _set_cache_sizes();
+  // zhou: "max duration to force deferred submit",
   void _set_max_defer_interval() {
     max_defer_interval =
 	cct->_conf.get_val<double>("bluestore_max_defer_interval");
@@ -370,7 +372,7 @@ public:
       f->dump_unsigned("length", length);
       f->dump_unsigned("data_length", data.length());
     }
-  };
+  }; // zhou: struct Buffer {}
 
   struct BufferCacheShard;
 
@@ -521,6 +523,7 @@ public:
     }
     friend std::ostream& operator<<(std::ostream& out, const BufferSpace& bc);
   };
+// zhou: struct BufferSpace {}
 
   struct SharedBlobSet;
 
@@ -576,7 +579,7 @@ public:
       return loaded;
     }
 
-  };
+  }; // zhou: struct SharedBlob {}
   typedef boost::intrusive_ptr<SharedBlob> SharedBlobRef;
 
   /// a lookup table of SharedBlobs
@@ -626,7 +629,7 @@ public:
 
     template <int LogLevelV>
     void dump(CephContext *cct);
-  };
+  }; // zhou: struct SharedBlobSet {}
 
 //#define CACHE_BLOB_BL  // not sure if this is a win yet or not... :/
 
@@ -853,12 +856,15 @@ public:
       bool include_ref_map,
       Collection *coll);
 #endif
-  };
+  }; // zhou: struct Blob {}
+
   typedef boost::intrusive_ptr<Blob> BlobRef;
   typedef mempool::bluestore_cache_meta::map<int,BlobRef> blob_map_t;
 
   /// a logical extent, pointing to (some portion of) a blob
   typedef boost::intrusive::set_base_hook<boost::intrusive::optimize_size<true> > ExtentBase; //making an alias to avoid build warnings
+
+  // zhou: logical address space
   struct Extent : public ExtentBase {
     MEMPOOL_CLASS_HELPERS();
 
@@ -920,7 +926,8 @@ public:
     bool blob_escapes_range(uint32_t o, uint32_t l) const {
       return blob_start() < o || blob_end() > o + l;
     }
-  };
+  }; // zhou: struct Extent {}
+
   typedef boost::intrusive::set<Extent> extent_map_t;
 
 
@@ -950,9 +957,11 @@ public:
 
   struct Onode;
 
+  // zhou: an object may contains several struct Extent.
   /// a sharded extent map, mapping offsets to lextents to blobs
   struct ExtentMap {
     Onode *onode;
+
     extent_map_t extent_map;        ///< map of Extents to Blobs
     blob_map_t spanning_blob_map;   ///< blobs that span shards
     typedef boost::intrusive_ptr<Onode> OnodeRef;
@@ -1205,7 +1214,7 @@ public:
   /*
   The primary idea of the collector is to estimate a difference between
   allocation units(AU) currently present for compressed blobs and new AUs
-  required to store that data uncompressed. 
+  required to store that data uncompressed.
   Estimation is performed for protrusive extents within a logical range
   determined by a concatenation of old_extents collection and specific(current)
   write request.
@@ -1214,9 +1223,9 @@ public:
   the collection to determine if blob to be released.
   Protrusive extents are extents that fit into the blob std::set in action
   (ones that are below the logical range from above) but not removed totally
-  due to the current write. 
+  due to the current write.
   E.g. for
-  extent1 <loffs = 100, boffs = 100, len  = 100> -> 
+  extent1 <loffs = 100, boffs = 100, len  = 100> ->
     blob1<compressed, len_on_disk=4096, logical_len=8192>
   extent2 <loffs = 200, boffs = 200, len  = 100> ->
     blob2<raw, len_on_disk=4096, llen=4096>
@@ -1226,7 +1235,7 @@ public:
     blob3<raw, len_on_disk=4096, llen=4096>
   write(300~100)
   protrusive extents are within the following ranges <0~300, 400~8192-400>
-  In this case existing AUs that might be removed due to GC (i.e. blob1) 
+  In this case existing AUs that might be removed due to GC (i.e. blob1)
   use 2x4K bytes.
   And new AUs expected after GC = 0 since extent1 to be merged into blob2.
   Hence we should do a collect.
@@ -1251,17 +1260,17 @@ public:
   private:
     struct BlobInfo {
       uint64_t referenced_bytes = 0;    ///< amount of bytes referenced in blob
-      int64_t expected_allocations = 0; ///< new alloc units required 
+      int64_t expected_allocations = 0; ///< new alloc units required
                                         ///< in case of gc fulfilled
-      bool collect_candidate = false;   ///< indicate if blob has any extents 
+      bool collect_candidate = false;   ///< indicate if blob has any extents
                                         ///< eligible for GC.
-      extent_map_t::const_iterator first_lextent; ///< points to the first 
-                                                  ///< lextent referring to 
+      extent_map_t::const_iterator first_lextent; ///< points to the first
+                                                  ///< lextent referring to
                                                   ///< the blob if any.
-                                                  ///< collect_candidate flag 
+                                                  ///< collect_candidate flag
                                                   ///< determines the validity
-      extent_map_t::const_iterator last_lextent;  ///< points to the last 
-                                                  ///< lextent referring to 
+      extent_map_t::const_iterator last_lextent;  ///< points to the last
+                                                  ///< lextent referring to
                                                   ///< the blob if any.
 
       BlobInfo(uint64_t ref_bytes) :
@@ -1277,19 +1286,19 @@ public:
     interval_set<uint64_t> extents_to_collect;
 
     boost::optional<uint64_t > used_alloc_unit; ///< last processed allocation
-                                                ///<  unit when traversing 
-                                                ///< protrusive extents. 
+                                                ///<  unit when traversing
+                                                ///< protrusive extents.
                                                 ///< Other extents mapped to
-                                                ///< this AU to be ignored 
+                                                ///< this AU to be ignored
                                                 ///< (except the case where
                                                 ///< uncompressed extent follows
                                                 ///< compressed one - see below).
     BlobInfo* blob_info_counted = nullptr; ///< std::set if previous allocation unit
                                            ///< caused expected_allocations
 					   ///< counter increment at this blob.
-                                           ///< if uncompressed extent follows 
-                                           ///< a decrement for the 
-                                	   ///< expected_allocations counter 
+                                           ///< if uncompressed extent follows
+                                           ///< a decrement for the
+                                	   ///< expected_allocations counter
                                            ///< is needed
     int64_t expected_allocations = 0;      ///< new alloc units required in case
                                            ///< of gc fulfilled
@@ -1298,7 +1307,7 @@ public:
                                            ///< gone after GC
 
   protected:
-    void process_protrusive_extents(const BlueStore::ExtentMap& extent_map, 
+    void process_protrusive_extents(const BlueStore::ExtentMap& extent_map,
 				    uint64_t start_offset,
 				    uint64_t end_offset,
 				    uint64_t start_touch_offset,
@@ -1308,6 +1317,9 @@ public:
 
   struct OnodeSpace;
   struct OnodeCacheShard;
+
+  // zhou: object in memory
+
   /// an in-memory object
   struct Onode {
     MEMPOOL_CLASS_HELPERS();
@@ -1322,6 +1334,7 @@ public:
 
     boost::intrusive::list_member_hook<> lru_item;
 
+    // zhou: object on disk
     bluestore_onode_t onode;  ///< metadata stored as value in kv store
     bool exists;              ///< true if object logically exists
     bool cached;              ///< Onode is logically in the cache
@@ -1436,6 +1449,7 @@ public:
 private:
     void _decode(const ceph::buffer::list& v);
   };
+
   typedef boost::intrusive_ptr<Onode> OnodeRef;
 
   /// A generic Cache Shard
@@ -1475,7 +1489,7 @@ private:
 
     void trim() {
       std::lock_guard l(lock);
-      _trim();    
+      _trim();
     }
     void flush() {
       std::lock_guard l(lock);
@@ -1551,7 +1565,7 @@ private:
       ceph_assert(num_blobs == 0);
       ceph_assert(num_extents == 0);
     }
-    static BufferCacheShard *create(CephContext* cct, std::string type, 
+    static BufferCacheShard *create(CephContext* cct, std::string type,
                                     PerfCounters *logger);
     virtual void _add(Buffer *b, int level, Buffer *near) = 0;
     virtual void _rm(Buffer *b) = 0;
@@ -1623,10 +1637,12 @@ private:
   class OpSequencer;
   using OpSequencerRef = ceph::ref_t<OpSequencer>;
 
+  // zhou: PG in memory metadata
   struct Collection : public CollectionImpl {
     BlueStore *store;
     OpSequencerRef osr;
     BufferCacheShard *cache;       ///< our cache shard
+    // zhou: PG on disk?
     bluestore_cnode_t cnode;
     ceph::shared_mutex lock =
       ceph::make_shared_mutex("BlueStore::Collection::lock", true, false);
@@ -1877,7 +1893,7 @@ private:
 #ifdef WITH_BLKIN
        if (trace) {
          trace.event(get_state_name());
-       } 
+       }
 #endif
     }
     inline state_t get_state() {
@@ -2440,7 +2456,7 @@ private:
   uint64_t osd_memory_base = 0;     ///< OSD base memory when autotuning cache
   double osd_memory_expected_fragmentation = 0; ///< expected memory fragmentation
   uint64_t osd_memory_cache_min = 0; ///< Min memory to assign when autotuning cache
-  double osd_memory_cache_resize_interval = 0; ///< Time to wait between cache resizing 
+  double osd_memory_cache_resize_interval = 0; ///< Time to wait between cache resizing
   double max_defer_interval = 0; ///< Time to wait between last deferred submit
   std::atomic<uint32_t> config_changed = {0}; ///< Counter to determine if there is a configuration change.
 
@@ -2503,11 +2519,11 @@ private:
 	}
         return -EOPNOTSUPP;
       }
- 
+
       virtual int64_t get_cache_bytes(PriorityCache::Priority pri) const {
         return cache_bytes[pri];
       }
-      virtual int64_t get_cache_bytes() const { 
+      virtual int64_t get_cache_bytes() const {
         int64_t total = 0;
 
         for (int i = 0; i < PriorityCache::Priority::LAST + 1; i++) {
@@ -2640,7 +2656,7 @@ private:
         for (auto i : store->buffer_cache_shards) {
           bytes += i->_get_bytes();
         }
-        return bytes; 
+        return bytes;
       }
       virtual void shift_bins() {
         for (auto i : store->buffer_cache_shards) {
@@ -3069,6 +3085,7 @@ public:
   }
 
   int mkfs() override;
+  // zhou: do nothing on bluestore.
   int mkjournal() override {
     return 0;
   }
@@ -3606,6 +3623,7 @@ private:
     BigDeferredWriteContext& dctx,
     bufferlist::iterator& blp,
     WriteContext* wctx);
+
   void _do_write_big(
     TransContext *txc,
     CollectionRef &c,
@@ -3625,6 +3643,7 @@ private:
     WriteContext *wctx,
     std::set<SharedBlob*> *maybe_unshared_blobs=0);
 
+  // zhou:
   int _write(TransContext *txc,
 	     CollectionRef& c,
 	     OnodeRef& o,
@@ -3765,12 +3784,13 @@ private:
   void _collect_allocation_stats(uint64_t need, uint32_t alloc_size,
                                  const PExtentVector&);
   void _record_allocation_stats();
+
 private:
   uint64_t probe_count = 0;
   std::atomic<uint64_t> alloc_stats_count = {0};
   std::atomic<uint64_t> alloc_stats_fragments = { 0 };
   std::atomic<uint64_t> alloc_stats_size = { 0 };
-  // 
+  //
   std::array<std::tuple<uint64_t, uint64_t, uint64_t>, 5> alloc_stats_history =
   { std::make_tuple(0ul, 0ul, 0ul) };
 
@@ -3967,10 +3987,10 @@ private:
 
   void _fsck_check_objects(FSCKDepth depth,
     FSCK_ObjectCtx& ctx);
-};
+}; // zhou: class BlueStore
 
 inline std::ostream& operator<<(std::ostream& out, const BlueStore::volatile_statfs& s) {
-  return out 
+  return out
     << " allocated:"
       << s.values[BlueStore::volatile_statfs::STATFS_ALLOCATED]
     << " stored:"
@@ -4006,13 +4026,13 @@ public:
   using fsck_interval = interval_set<uint64_t>;
 
   // Structure to track what pextents are used for specific cid/oid.
-  // Similar to Bloom filter positive and false-positive matches are 
+  // Similar to Bloom filter positive and false-positive matches are
   // possible only.
   // Maintains two lists of bloom filters for both cids and oids
   //   where each list entry is a BF for specific disk pextent
   //   The length of the extent per filter is measured on init.
   // Allows to filter out 'uninteresting' pextents to speadup subsequent
-  //  'is_used' access. 
+  //  'is_used' access.
   struct StoreSpaceTracker {
     const uint64_t BLOOM_FILTER_SALT_COUNT = 2;
     const uint64_t BLOOM_FILTER_TABLE_SIZE = 32; // bytes per single filter
@@ -4022,8 +4042,8 @@ public:
     typedef mempool::bluestore_fsck::vector<bloom_filter> bloom_vector;
     bloom_vector collections_bfs;
     bloom_vector objects_bfs;
-    
-    bool was_filtered_out = false; 
+
+    bool was_filtered_out = false;
     uint64_t granularity = 0; // extent length for a single filter
 
     StoreSpaceTracker() {
@@ -4040,7 +4060,7 @@ public:
       ceph_assert(!granularity); // not initialized yet
       ceph_assert(std::has_single_bit(min_alloc_size));
       ceph_assert(mem_cap);
-      
+
       total = round_up_to(total, min_alloc_size);
       granularity = total * BLOOM_FILTER_TABLE_SIZE * 2 / mem_cap;
 
@@ -4056,7 +4076,7 @@ public:
                      BLOOM_FILTER_TABLE_SIZE,
                      0,
                      BLOOM_FILTER_EXPECTED_COUNT));
-      objects_bfs.resize(entries, 
+      objects_bfs.resize(entries,
         bloom_filter(BLOOM_FILTER_SALT_COUNT,
                      BLOOM_FILTER_TABLE_SIZE,
                      0,
@@ -4068,7 +4088,7 @@ public:
     inline void set_used(uint64_t offset, uint64_t len,
 			 const coll_t& cid, const ghobject_t& oid) {
       ceph_assert(granularity); // initialized
-      
+
       // can't call this func after filter_out has been applied
       ceph_assert(!was_filtered_out);
       if (!len) {
@@ -4086,7 +4106,7 @@ public:
     // 'is_used' calls are permitted after that only
     size_t filter_out(const fsck_interval& extents);
 
-    // determines if collection's present after filtering-out 
+    // determines if collection's present after filtering-out
     inline bool is_used(const coll_t& cid) const {
       ceph_assert(was_filtered_out);
       for(auto& bf : collections_bfs) {
@@ -4096,7 +4116,7 @@ public:
       }
       return false;
     }
-    // determines if object's present after filtering-out 
+    // determines if object's present after filtering-out
     inline bool is_used(const ghobject_t& oid) const {
       ceph_assert(was_filtered_out);
       for(auto& bf : objects_bfs) {
@@ -4106,7 +4126,7 @@ public:
       }
       return false;
     }
-    // determines if collection's present before filtering-out 
+    // determines if collection's present before filtering-out
     inline bool is_used(const coll_t& cid, uint64_t offs) const {
       ceph_assert(granularity); // initialized
       ceph_assert(!was_filtered_out);
@@ -4116,7 +4136,7 @@ public:
       }
       return false;
     }
-    // determines if object's present before filtering-out 
+    // determines if object's present before filtering-out
     inline bool is_used(const ghobject_t& oid, uint64_t offs) const {
       ceph_assert(granularity); // initialized
       ceph_assert(!was_filtered_out);

@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
+/ -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -1056,7 +1056,7 @@ void PrimaryLogPG::do_command(
     f->close_section();
   }
   else if (prefix == "log") {
-    
+
     f->open_object_section("op_log");
     f->open_object_section("pg_log_t");
     recovery_state.get_pg_log().get_log().dump(f.get());
@@ -1644,7 +1644,7 @@ int PrimaryLogPG::do_scrub_ls(const MOSDOp *m, OSDOp *osd_op)
   } else {
     bool store_queried = m_scrubber && m_scrubber->get_store_errors(arg, result);
     if (store_queried) {
-      encode(result, osd_op->outdata); 
+      encode(result, osd_op->outdata);
     } else {
       // the scrubber's store is not initialized
       r = -ENOENT;
@@ -1752,12 +1752,13 @@ void PrimaryLogPG::release_object_locks(
   }
 }
 
+// zhou: README, alloc PG backend object via PGBackend::build_pg_backend().
 PrimaryLogPG::PrimaryLogPG(OSDService *o, OSDMapRef curmap,
 			   const PGPool &_pool,
 			   const map<string,string>& ec_profile, spg_t p) :
   PG(o, curmap, _pool, p),
   pgbackend(
-    PGBackend::build_pg_backend(
+      PGBackend::build_pg_backend(
       _pool.info, ec_profile, this, coll_t(p), ch, o->store, cct)),
   object_contexts(o->cct, o->cct->_conf->osd_pg_object_context_cache_count),
   new_backfill(false),
@@ -1767,6 +1768,7 @@ PrimaryLogPG::PrimaryLogPG(OSDService *o, OSDMapRef curmap,
   recovery_state.set_backend_predicates(
     pgbackend->get_is_readable_predicate(),
     pgbackend->get_is_recoverable_predicate());
+
   snap_trimmer_machine.initiate();
 
   m_scrubber = make_unique<PrimaryLogScrub>(this);
@@ -1803,6 +1805,8 @@ void PrimaryLogPG::handle_backoff(OpRequestRef& op)
   session->ack_backoff(cct, m->pgid, m->id, begin, end);
 }
 
+// zhou: README, according to PG state, handle different messages.
+//       Invoked by OSD::dequeue_op()
 void PrimaryLogPG::do_request(
   OpRequestRef& op,
   ThreadPool::TPHandle &handle)
@@ -1823,6 +1827,8 @@ void PrimaryLogPG::do_request(
     op->mark_delayed("waiting_for_map not empty");
     return;
   }
+
+  // zhou:
   if (!have_same_or_newer_map(op->min_epoch)) {
     dout(20) << __func__ << " min " << op->min_epoch
 	     << ", queue on waiting_for_map " << op->get_source() << dendl;
@@ -1915,6 +1921,7 @@ void PrimaryLogPG::do_request(
 	osd->reply_op_error(op, -EOPNOTSUPP);
 	return;
       }
+      // zhou: README, handle READ/WRITE
       do_op(op);
       break;
     case CEPH_MSG_OSD_BACKOFF:
@@ -1969,6 +1976,8 @@ void PrimaryLogPG::do_request(
  * pg lock will be held (if multithreaded)
  * osd_lock NOT held.
  */
+// zhou: README, check object and its head/snap/clone state,
+//       get context, ObjectContext, OPContext ???
 void PrimaryLogPG::do_op(OpRequestRef& op)
 {
   FUNCTRACE(cct);
@@ -2311,6 +2320,7 @@ void PrimaryLogPG::do_op(OpRequestRef& op)
              << dendl;
   }
 
+  // zhou:
   int r = find_object_context(
     oid, &obc, can_create,
     m->has_flag(CEPH_OSD_FLAG_MAP_SNAP_CLONE),
@@ -2494,7 +2504,9 @@ void PrimaryLogPG::do_op(OpRequestRef& op)
 
   op->mark_started();
 
+  // zhou: handle READ/WRITE
   execute_ctx(ctx);
+
   utime_t prepare_latency = ceph_clock_now();
   prepare_latency -= op->get_dequeued_time();
   osd->logger->tinc(l_osd_op_prepare_lat, prepare_latency);
@@ -2521,7 +2533,7 @@ PrimaryLogPG::cache_result_t PrimaryLogPG::maybe_handle_manifest_detail(
   }
 
   if (!obc->obs.oi.has_manifest()) {
-    dout(20) << __func__ << ": " << obc->obs.oi.soid 
+    dout(20) << __func__ << ": " << obc->obs.oi.soid
 	     << " is not manifest object " << dendl;
     return cache_result_t::NOOP;
   }
@@ -3400,7 +3412,7 @@ struct C_SetDedupChunks : public Context {
   epoch_t last_peering_reset;
   ceph_tid_t tid;
   uint64_t offset;
-  
+
   C_SetDedupChunks(PrimaryLogPG *p, hobject_t o, epoch_t lpr, uint64_t offset)
     : pg(p), oid(o), last_peering_reset(lpr),
       tid(0), offset(offset)
@@ -3439,7 +3451,7 @@ void PrimaryLogPG::cancel_manifest_ops(bool requeue, vector<ceph_tid_t> *tids)
   }
 }
 
-int PrimaryLogPG::get_manifest_ref_count(ObjectContextRef obc, std::string& fp_oid, OpRequestRef op) 
+int PrimaryLogPG::get_manifest_ref_count(ObjectContextRef obc, std::string& fp_oid, OpRequestRef op)
 {
   int cnt = 0;
   // head
@@ -3565,7 +3577,7 @@ void PrimaryLogPG::dec_refcount(const hobject_t& soid, const object_ref_delta_t&
     ceph_assert(dec_ref_count < 0);
     while (dec_ref_count < 0) {
       dout(10) << __func__ << ": decrement reference on offset oid: " << p->first << dendl;
-      refcount_manifest(soid, p->first, 
+      refcount_manifest(soid, p->first,
 			refcount_t::DECREMENT_REF, NULL, std::nullopt);
       dec_ref_count++;
     }
@@ -3573,8 +3585,8 @@ void PrimaryLogPG::dec_refcount(const hobject_t& soid, const object_ref_delta_t&
 }
 
 
-void PrimaryLogPG::get_adjacent_clones(ObjectContextRef src_obc, 
-				       ObjectContextRef& _l, ObjectContextRef& _g) 
+void PrimaryLogPG::get_adjacent_clones(ObjectContextRef src_obc,
+				       ObjectContextRef& _l, ObjectContextRef& _g)
 {
   const SnapSet& snapset = src_obc->ssc->snapset;
   const object_info_t& oi = src_obc->obs.oi;
@@ -3632,7 +3644,7 @@ bool PrimaryLogPG::inc_refcount_by_set(OpContext* ctx, object_manifest_t& set_ch
 	 */
 	auto target_oid = p->first;
 	auto offset = c.first;
-	auto length = c.second.length;	
+	auto length = c.second.length;
 	auto* fin = new C_SetManifestRefCountDone(this, ctx->obs->oi.soid, offset);
 	ceph_tid_t tid = refcount_manifest(ctx->obs->oi.soid, target_oid,
 					    refcount_t::INCREMENT_REF, fin, std::nullopt);
@@ -3666,11 +3678,11 @@ bool PrimaryLogPG::inc_refcount_by_set(OpContext* ctx, object_manifest_t& set_ch
 }
 
 void PrimaryLogPG::update_chunk_map_by_dirty(OpContext* ctx) {
-  /* 
-   * We should consider two cases here: 
+  /*
+   * We should consider two cases here:
    *  1) just modification: This created dirty regions, but didn't update chunk_map.
    *  2) rollback: In rollback, head will be converted to the clone the rollback targets.
-   *  		Also, rollback already updated chunk_map.  
+   *  		Also, rollback already updated chunk_map.
    * So, we should do here is to check whether chunk_map is updated and the clean_region has dirty regions.
    * In case of the rollback, chunk_map doesn't need to be clear
    */
@@ -3735,7 +3747,7 @@ void PrimaryLogPG::dec_all_refcount_manifest(const object_info_t& oi, OpContext*
 	     oi.test_flag(object_info_t::FLAG_REDIRECT_HAS_REFERENCE)) {
     ctx->register_on_commit(
       [oi, this](){
-	refcount_manifest(oi.soid, oi.manifest.redirect_target, 
+	refcount_manifest(oi.soid, oi.manifest.redirect_target,
 			  refcount_t::DECREMENT_REF, NULL, std::nullopt);
       });
   }
@@ -4026,7 +4038,7 @@ public:
     if (r >= 0) {
       ctx->pg->execute_ctx(ctx);
     } else {
-      if (r != -ECANCELED) { 
+      if (r != -ECANCELED) {
 	if (ctx->op)
 	  ctx->pg->osd->reply_op_error(ctx->op, r);
       } else if (results_data->should_requeue) {
@@ -4147,6 +4159,7 @@ void PrimaryLogPG::promote_object(ObjectContextRef obc,
     });
 }
 
+// zhou: README, prepare transaction
 void PrimaryLogPG::execute_ctx(OpContext *ctx)
 {
   FUNCTRACE(cct);
@@ -4211,6 +4224,7 @@ void PrimaryLogPG::execute_ctx(OpContext *ctx)
   }
 
 
+  // zhou: README,
   int result = prepare_transaction(ctx);
 
   {
@@ -4227,6 +4241,7 @@ void PrimaryLogPG::execute_ctx(OpContext *ctx)
     if (pending_async_reads) {
       ceph_assert(pool.info.is_erasure());
       in_progress_async_reads.push_back(make_pair(op, ctx));
+      // zhou: handle READ?
       ctx->start_async_reads(this);
     }
     return;
@@ -4238,6 +4253,7 @@ void PrimaryLogPG::execute_ctx(OpContext *ctx)
     return;
   }
 
+  // zhou: handle WRITE?
   bool ignore_out_data = false;
   if (!ctx->op_t->empty() &&
       op->may_write() &&
@@ -4362,8 +4378,11 @@ void PrimaryLogPG::execute_ctx(OpContext *ctx)
 
   RepGather *repop = new_repop(ctx, rep_tid);
 
+  // zhou: send request to replica
   issue_repop(repop, ctx);
+  // zhou: evaluate sending result.
   eval_repop(repop);
+
   repop->put();
 }
 
@@ -5038,6 +5057,7 @@ int PrimaryLogPG::do_writesame(OpContext *ctx, OSDOp& osd_op)
   write_op.op.op = CEPH_OSD_OP_WRITE;
   write_op.op.extent.offset = op.writesame.offset;
   write_op.op.extent.length = op.writesame.length;
+  // zhou: handle WRITE
   result = do_osd_ops(ctx, write_ops);
   if (result < 0)
     derr << "do_writesame do_osd_ops failed " << result << dendl;
@@ -5786,6 +5806,7 @@ int PrimaryLogPG::finish_extent_cmp(OSDOp& osd_op, const bufferlist &read_bl)
   return 0;
 }
 
+// zhou: README, handle READ
 int PrimaryLogPG::do_read(OpContext *ctx, OSDOp& osd_op) {
   dout(20) << __func__ << dendl;
   auto& op = osd_op.op;
@@ -5835,6 +5856,8 @@ int PrimaryLogPG::do_read(OpContext *ctx, OSDOp& osd_op) {
     if (oi.is_data_digest() && op.extent.offset == 0 &&
         op.extent.length >= oi.size)
       maybe_crc = oi.data_digest;
+
+    // zhou:
     ctx->pending_async_reads.push_back(
       make_pair(
         boost::make_tuple(op.extent.offset, op.extent.length, op.flags),
@@ -5846,6 +5869,7 @@ int PrimaryLogPG::do_read(OpContext *ctx, OSDOp& osd_op) {
 
     ctx->op_finishers[ctx->current_osd_subop_num].reset(
       new ReadFinisher(osd_op));
+
   } else {
     int r = pgbackend->objects_read_sync(
       soid, op.extent.offset, op.extent.length, op.flags, &osd_op.outdata);
@@ -5976,6 +6000,7 @@ int PrimaryLogPG::do_sparse_read(OpContext *ctx, OSDOp& osd_op) {
   return 0;
 }
 
+// zhou: README, handle OSD related OPs
 int PrimaryLogPG::do_osd_ops(OpContext *ctx, vector<OSDOp>& ops)
 {
   int result = 0;
@@ -6085,11 +6110,13 @@ int PrimaryLogPG::do_osd_ops(OpContext *ctx, vector<OSDOp>& ops)
       }
       // fall through
     case CEPH_OSD_OP_READ:
+      // zhou:
       ++ctx->num_read;
       tracepoint(osd, do_osd_op_pre_read, soid.oid.name.c_str(),
 		 soid.snap.val, oi.size, oi.truncate_seq, op.extent.offset,
 		 op.extent.length, op.extent.truncate_size,
 		 op.extent.truncate_seq);
+
       if (op_finisher == nullptr) {
 	if (!ctx->data_off) {
 	  ctx->data_off = op.extent.offset;
@@ -6153,6 +6180,7 @@ int PrimaryLogPG::do_osd_ops(OpContext *ctx, vector<OSDOp>& ops)
       }
       break;
 
+      // zhou: handle client defined OP with registered extention?
     case CEPH_OSD_OP_CALL:
       {
 	string cname, mname;
@@ -7168,7 +7196,7 @@ int PrimaryLogPG::do_osd_ops(OpContext *ctx, vector<OSDOp>& ops)
 	    new SetManifestFinisher(osd_op));
 	  ManifestOpRef mop = std::make_shared<ManifestOp>(ctx->obc, new RefCountCallback(ctx, osd_op));
 	  auto* fin = new C_SetManifestRefCountDone(this, soid, 0);
-	  ceph_tid_t tid = refcount_manifest(soid, target, 
+	  ceph_tid_t tid = refcount_manifest(soid, target,
 					      refcount_t::INCREMENT_REF, fin, std::nullopt);
 	  fin->tid = tid;
 	  mop->num_chunks++;
@@ -8368,9 +8396,9 @@ int PrimaryLogPG::_rollback_to(OpContext *ctx, OSDOp& op)
     ObjectContextRef promote_obc;
     cache_result_t tier_mode_result;
     if (obs.exists && obs.oi.has_manifest()) {
-      /* 
+      /*
        * In the case of manifest object, the object_info exists on the base tier at all time,
-       * so promote_obc should be equal to rollback_to 
+       * so promote_obc should be equal to rollback_to
        * */
       promote_obc = rollback_to;
       tier_mode_result =
@@ -8439,7 +8467,7 @@ int PrimaryLogPG::_rollback_to(OpContext *ctx, OSDOp& op)
 	/*
 	 * looking at the following case, the foo head needs the reference of chunk4 and chunk5
 	 * in case snap[1] is removed.
-	 * 
+	 *
 	 * Before rollback to snap[1]:
 	 *
 	 * foo snap[1]:          [chunk4]          [chunk5]
@@ -8450,7 +8478,7 @@ int PrimaryLogPG::_rollback_to(OpContext *ctx, OSDOp& op)
 	 *
 	 * foo snap[1]:          [chunk4]          [chunk5]
 	 * foo snap[0]: [                  chunk2                   ]
-	 * foo head   :          [chunk4]          [chunk5] 
+	 * foo head   :          [chunk4]          [chunk5]
 	 *
 	 */
 	OpFinisher* op_finisher = nullptr;
@@ -8546,7 +8574,7 @@ void PrimaryLogPG::_do_rollback_to(OpContext *ctx, ObjectContextRef rollback_to,
     obs.oi.set_flag(object_info_t::FLAG_MANIFEST);
     obs.oi.manifest.type = rollback_to->obs.oi.manifest.type;
     obs.oi.manifest.chunk_map = rollback_to->obs.oi.manifest.chunk_map;
-    ctx->cache_operation = true; 
+    ctx->cache_operation = true;
     ctx->delta_stats.num_objects_manifest++;
   }
 
@@ -8917,6 +8945,7 @@ hobject_t PrimaryLogPG::get_temp_recovery_object(
   return hoid;
 }
 
+// zhou: README,
 int PrimaryLogPG::prepare_transaction(OpContext *ctx)
 {
   ceph_assert(!ctx->ops->empty());
@@ -10537,7 +10566,7 @@ int PrimaryLogPG::start_dedup(OpRequestRef op, ObjectContextRef obc)
 
   ceph_assert(obc->is_blocked());
   if (oi.size == 0) {
-    // evicted 
+    // evicted
     return 0;
   }
   if (pool.info.get_fingerprint_type() == pg_pool_t::TYPE_FINGERPRINT_NONE) {
@@ -10556,7 +10585,7 @@ int PrimaryLogPG::start_dedup(OpRequestRef op, ObjectContextRef obc)
   ManifestOpRef mop(std::make_shared<ManifestOp>(obc, nullptr));
 
   // cdc
-  std::map<uint64_t, bufferlist> chunks; 
+  std::map<uint64_t, bufferlist> chunks;
   int r = do_cdc(oi, mop->new_manifest.chunk_map, chunks);
   if (r < 0) {
     return r;
@@ -10568,7 +10597,7 @@ int PrimaryLogPG::start_dedup(OpRequestRef op, ObjectContextRef obc)
   // chunks issued here are different with chunk_map newly generated
   // because the same chunks in previous snap will not be issued
   // So, we need two data structures; the first is the issued chunk list to track
-  // issued operations, and the second is the new chunk_map to update chunk_map after 
+  // issued operations, and the second is the new chunk_map to update chunk_map after
   // all operations are finished
   object_ref_delta_t refs;
   ObjectContextRef obc_l, obc_g;
@@ -10585,7 +10614,7 @@ int PrimaryLogPG::start_dedup(OpRequestRef op, ObjectContextRef obc)
       continue;
     }
     C_SetDedupChunks *fin = new C_SetDedupChunks(this, soid, get_last_peering_reset(), p.first);
-    ceph_tid_t tid = refcount_manifest(soid, target, refcount_t::CREATE_OR_GET_REF, 
+    ceph_tid_t tid = refcount_manifest(soid, target, refcount_t::CREATE_OR_GET_REF,
 			    fin, std::move(chunks[p.first]));
     mop->chunks[target] = make_pair(p.first, p.second.length());
     mop->num_chunks++;
@@ -10607,7 +10636,7 @@ int PrimaryLogPG::start_dedup(OpRequestRef op, ObjectContextRef obc)
   return -EINPROGRESS;
 }
 
-int PrimaryLogPG::do_cdc(const object_info_t& oi, 
+int PrimaryLogPG::do_cdc(const object_info_t& oi,
 			 std::map<uint64_t, chunk_info_t>& chunk_map,
 			 std::map<uint64_t, bufferlist>& chunks)
 {
@@ -10624,8 +10653,8 @@ int PrimaryLogPG::do_cdc(const object_info_t& oi,
   bufferlist bl;
   /**
    * We disable EC pool as a base tier of distributed dedup.
-   * The reason why we disallow erasure code pool here is that the EC pool does not support objects_read_sync(). 
-   * Therefore, we should change the current implementation totally to make EC pool compatible. 
+   * The reason why we disallow erasure code pool here is that the EC pool does not support objects_read_sync().
+   * Therefore, we should change the current implementation totally to make EC pool compatible.
    * As s result, we leave this as a future work.
    */
   int r = pgbackend->objects_read_sync(
@@ -10641,14 +10670,14 @@ int PrimaryLogPG::do_cdc(const object_info_t& oi,
     return -EIO;
   }
 
-  dout(10) << __func__ << " oid: " << oi.soid << " len: " << bl.length() 
-	   << " oi.size: " << oi.size   
+  dout(10) << __func__ << " oid: " << oi.soid << " len: " << bl.length()
+	   << " oi.size: " << oi.size
 	   << " chunk_size: " << chunk_size << dendl;
 
   vector<pair<uint64_t, uint64_t>> cdc_chunks;
   cdc->calc_chunks(bl, &cdc_chunks);
 
-  // get fingerprint 
+  // get fingerprint
   for (auto p : cdc_chunks) {
     bufferlist chunk;
     chunk.substr_of(bl, p.first, p.second);
@@ -10682,7 +10711,7 @@ std::pair<int, hobject_t> PrimaryLogPG::get_fpoid_from_chunk(
 	assert(0 == "unrecognized fingerprint type");
 	return {};
     }
-  }();    
+  }();
 
   pg_t raw_pg;
   object_locator_t oloc(soid);
@@ -10743,7 +10772,7 @@ int PrimaryLogPG::finish_set_dedup(hobject_t oid, int r, ceph_tid_t tid, uint64_
     } else if (mop->op) {
       dout(10) << __func__ << " waiting on write lock " << mop->op << dendl;
       close_op_ctx(ctx.release());
-      return -EAGAIN;    
+      return -EAGAIN;
     }
 
     ctx->at_version = get_next_version();
@@ -10756,15 +10785,15 @@ int PrimaryLogPG::finish_set_dedup(hobject_t oid, int r, ceph_tid_t tid, uint64_
       ctx->new_obs.oi.manifest.type = object_manifest_t::TYPE_CHUNKED;
     }
 
-    /* 
+    /*
     * Let's assume that there is a manifest snapshotted object, and we issue tier_flush() to head.
     * head: [0, 2) aaa <-- tier_flush()
     * 20:   [0, 2) ddd, [6, 2) bbb, [8, 2) ccc
-    * 
+    *
     * In this case, if the new chunk_map is as follows,
     * new_chunk_map : [0, 2) ddd, [6, 2) bbb, [8, 2) ccc
     * we should drop aaa from head by using calc_refs_to_drop_on_removal().
-    * So, the precedure is 
+    * So, the precedure is
     * 	1. calc_refs_to_drop_on_removal()
     * 	2. register old references to drop after tier_flush() is committed
     * 	3. update new chunk_map
@@ -10772,7 +10801,7 @@ int PrimaryLogPG::finish_set_dedup(hobject_t oid, int r, ceph_tid_t tid, uint64_
 
     ObjectCleanRegions c_regions = ctx->clean_regions;
     ObjectContextRef cobc = get_prev_clone_obc(obc);
-    c_regions.mark_fully_dirty(); 
+    c_regions.mark_fully_dirty();
     // CDC was done on entire range of manifest object,
     // so the first thing we should do here is to drop the reference to old chunks
     ObjectContextRef obc_l, obc_g;
@@ -10830,7 +10859,7 @@ int PrimaryLogPG::finish_set_manifest_refcount(hobject_t oid, int r, ceph_tid_t 
   manifest_ops.erase(p);
   mop.reset();
 
-  return 0; 
+  return 0;
 }
 
 int PrimaryLogPG::start_flush(
@@ -11393,6 +11422,7 @@ void PrimaryLogPG::op_applied(const eversion_t &applied_version)
   }
 }
 
+// zhou: README,
 void PrimaryLogPG::eval_repop(RepGather *repop)
 {
   dout(10) << "eval_repop " << *repop
@@ -11442,6 +11472,7 @@ void PrimaryLogPG::eval_repop(RepGather *repop)
   }
 }
 
+// zhou: README, send OP to ObjectStore
 void PrimaryLogPG::issue_repop(RepGather *repop, OpContext *ctx)
 {
   FUNCTRACE(cct);
@@ -11474,6 +11505,9 @@ void PrimaryLogPG::issue_repop(RepGather *repop, OpContext *ctx)
     soid,
     ctx->log,
     ctx->at_version);
+
+  // zhou: class ReplicatedBackend / class ECBackend
+  //       e.g. "ReplicatedBackend::submit_transaction()"
   pgbackend->submit_transaction(
     soid,
     ctx->delta_stats,

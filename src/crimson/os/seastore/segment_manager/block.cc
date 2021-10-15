@@ -301,7 +301,7 @@ static check_create_device_ret check_create_device(
   });
 }
 
-using open_device_ret = 
+using open_device_ret =
   BlockSegmentManager::access_ertr::future<
   std::pair<seastar::file, seastar::stat_data>
   >;

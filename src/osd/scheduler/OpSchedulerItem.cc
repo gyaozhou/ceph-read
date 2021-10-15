@@ -24,12 +24,15 @@ std::ostream& operator<<(std::ostream& out, const op_scheduler_class& class_id) 
   return out;
 }
 
+// zhou: README,
+
 void PGOpItem::run(
   OSD *osd,
   OSDShard *sdata,
   PGRef& pg,
   ThreadPool::TPHandle &handle)
 {
+  // zhou: OSD::dequeue_op()
   osd->dequeue_op(pg, op, handle);
   pg->unlock();
 }

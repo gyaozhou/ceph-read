@@ -86,6 +86,7 @@ KernelDevice::KernelDevice(CephContext* cct, aio_callback_t cb, void *cbpriv, ai
            << dendl;
       once = true;
     }
+    // zhou: aio
     io_queue = std::make_unique<aio_queue_t>(iodepth);
   }
 }
@@ -130,12 +131,15 @@ int KernelDevice::_lock()
   }
 }
 
+// zhou: open kernel based /dev/sda.
+
 int KernelDevice::open(const string& p)
 {
   path = p;
   int r = 0, i = 0;
   uint64_t num_discard_threads = 0;
   dout(1) << __func__ << " path " << path << dendl;
+
 
   struct stat statbuf;
   bool is_block;
@@ -145,6 +149,9 @@ int KernelDevice::open(const string& p)
     goto out_fail;
   }
   is_block = (statbuf.st_mode & S_IFMT) == S_IFBLK;
+
+  // zhou: different fd used for different Write Hint. Set it by F_SET_FILE_RW_HINT.
+
   for (i = 0; i < WRITE_LIFE_MAX; i++) {
     int flags = 0;
     if (lock_exclusive && is_block && (i == 0)) {
@@ -169,6 +176,7 @@ int KernelDevice::open(const string& p)
     }
     fd_buffereds[i] = fd;
   }
+
 
   if (i != WRITE_LIFE_MAX) {
     derr << __func__ << " open got: " << cpp_strerror(r) << dendl;
@@ -198,6 +206,8 @@ int KernelDevice::open(const string& p)
     ceph_abort_msg("non-aio not supported");
   }
 
+  // zhou: predeclare an access pattern for file data.
+
   // disable readahead as it will wreak havoc on our mix of
   // directio/aio and buffered io.
   r = posix_fadvise(fd_buffereds[WRITE_LIFE_NOT_SET], 0, 0, POSIX_FADV_RANDOM);
@@ -220,6 +230,7 @@ int KernelDevice::open(const string& p)
     }
   }
 
+  // zhou: file stat
   struct stat st;
   r = ::fstat(fd_directs[WRITE_LIFE_NOT_SET], &st);
   if (r < 0) {
@@ -240,6 +251,7 @@ int KernelDevice::open(const string& p)
   }
 
 
+  // zhou: get block device property from OS
   {
     BlkDev blkdev_direct(fd_directs[WRITE_LIFE_NOT_SET]);
     BlkDev blkdev_buffered(fd_buffereds[WRITE_LIFE_NOT_SET]);
@@ -281,10 +293,15 @@ int KernelDevice::open(const string& p)
     goto out_fail;
   }
 
+  // zhou: create aio completion thread
+
   r = _aio_start();
   if (r < 0) {
     goto out_fail;
   }
+
+
+  // zhou: create discard thread
 
   num_discard_threads = cct->_conf.get_val<uint64_t>("bdev_async_discard_threads");
   if (support_discard && cct->_conf->bdev_enable_discard && num_discard_threads > 0) {
@@ -390,6 +407,7 @@ int KernelDevice::collect_metadata(const string& prefix, map<string,string> *pm)
     }
   }
 
+  // zhou: get all kinds of property from OS
   struct stat st;
   int r = ::fstat(fd_buffereds[WRITE_LIFE_NOT_SET], &st);
   if (r < 0)
@@ -506,10 +524,12 @@ int KernelDevice::flush()
   return r;
 }
 
+// zhou: setup aio context and completion hander thread.
 int KernelDevice::_aio_start()
 {
   if (aio) {
     dout(10) << __func__ << dendl;
+    // zhou: io_setup(2)
     int r = io_queue->init(fd_directs);
     if (r < 0) {
       if (r == -EAGAIN) {
@@ -520,7 +540,10 @@ int KernelDevice::_aio_start()
       }
       return r;
     }
+
+    // zhou: create aio completion thread
     aio_thread.create("bstore_aio");
+
   }
   return 0;
 }
@@ -891,6 +914,7 @@ void KernelDevice::_aio_log_finish(
   }
 }
 
+// zhou: README,
 void KernelDevice::aio_submit(IOContext *ioc)
 {
   dout(20) << __func__ << " ioc " << ioc
@@ -1009,7 +1033,7 @@ int KernelDevice::write(
 {
   uint64_t len = bl.length();
   dout(20) << __func__ << " 0x" << std::hex << off << "~" << len << std::dec
-	   << " " << buffermode(buffered) 
+	   << " " << buffermode(buffered)
 	   << dendl;
   ceph_assert(is_valid_io(off, len));
   if (cct->_conf->objectstore_blackhole) {
@@ -1029,6 +1053,7 @@ int KernelDevice::write(
   return _sync_write(off, bl, buffered, write_hint);
 }
 
+// zhou: README,
 int KernelDevice::aio_write(
   uint64_t off,
   bufferlist &bl,
@@ -1121,6 +1146,8 @@ int KernelDevice::aio_write(
   }
   return 0;
 }
+
+// zhou: README,
 
 int KernelDevice::_discard(uint64_t offset, uint64_t len)
 {
@@ -1339,7 +1366,7 @@ int KernelDevice::read(uint64_t off, uint64_t len, bufferlist *pbl,
   ceph_assert((uint64_t)r == len);
   pbl->push_back(std::move(p));
 
-  dout(40) << "data:\n"; 
+  dout(40) << "data:\n";
   pbl->hexdump(*_dout);
   *_dout << dendl;
 

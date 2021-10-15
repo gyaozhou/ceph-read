@@ -170,6 +170,8 @@ public:
 
     _call_observers(rev_obs);
   }
+
+  // zhou: README,
   void add_observer(md_config_obs_t* obs) {
     std::lock_guard l(lock);
     obs_mgr.add_observer(obs);

@@ -19,6 +19,7 @@
 #include "Messenger.h"
 #include "Policy.h"
 
+// zhou: implemented policy part API of Messenger, NOT a concrete class.
 class SimplePolicyMessenger : public Messenger
 {
 private:

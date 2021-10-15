@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #include "msg/Message.h"
@@ -225,10 +225,12 @@ void DispatchQueue::discard_queue(uint64_t id) {
   }
 }
 
+// zhou:
 void DispatchQueue::start()
 {
   ceph_assert(!stop);
   ceph_assert(!dispatch_thread.is_started());
+
   dispatch_thread.create("ms_dispatch");
   local_delivery_thread.create("ms_local");
 }

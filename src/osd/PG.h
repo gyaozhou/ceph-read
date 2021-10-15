@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_PG_H
@@ -21,7 +21,7 @@
 
 // re-include our assert to clobber boost's
 #include "common/admin_finisher.h"
-#include "include/ceph_assert.h" 
+#include "include/ceph_assert.h"
 #include "include/common_fwd.h"
 
 #include "include/types.h"
@@ -78,6 +78,7 @@ namespace Scrub {
   void put_with_id(PG *pg, uint64_t id);
   typedef TrackedIntPtr<PG> PGRef;
 #else
+  // zhou: normal path
   typedef boost::intrusive_ptr<PG> PGRef;
 #endif
 
@@ -157,7 +158,7 @@ class PGRecoveryStats {
     i.events += events;
     i.event_time += event_dur;
   }
-};
+}; // zhou: class PGRecoveryStats
 
 /** PG - Replica Placement Group
  *
@@ -179,7 +180,7 @@ public:
   /// and be removed only in the PrimaryLogPG destructor.
   std::unique_ptr<ScrubPgIF> m_scrubber;
 
-  /// flags detailing scheduling/operation characteristics of the next scrub 
+  /// flags detailing scheduling/operation characteristics of the next scrub
   requested_scrub_t m_planned_scrub;
 
   const requested_scrub_t& get_planned_scrub() const {
@@ -789,6 +790,7 @@ public:
 protected:
   // -------------
   // protected
+  // zhou:
   OSDService *osd;
 public:
   OSDShard *osd_shard = nullptr;
@@ -1157,7 +1159,7 @@ protected:
   void remove_snap_mapped_object(
     ObjectStore::Transaction& t, const hobject_t& soid);
 
-  bool have_unfound() const { 
+  bool have_unfound() const {
     return recovery_state.have_unfound();
   }
   uint64_t get_num_unfound() const {
@@ -1278,6 +1280,7 @@ protected:
     return recovery_state.should_send_notify();
   }
 
+  // zhou: PG state
   bool is_active() const { return recovery_state.is_active(); }
   bool is_activating() const { return recovery_state.is_activating(); }
   bool is_peering() const { return recovery_state.is_peering(); }
@@ -1389,6 +1392,7 @@ protected:
   friend ostream& operator<<(ostream& out, const PG& pg);
 
 protected:
+  // zhou:
   PeeringState recovery_state;
 
   // ref to recovery_state.pool

@@ -181,6 +181,7 @@ struct ceph_msg_header_old {
 	__le32 crc;       /* header crc32c */
 } __attribute__ ((packed));
 
+// zhou:
 struct ceph_msg_header {
 	__le64 seq;       /* message seq# for this session */
 	__le64 tid;       /* transaction id */
@@ -235,6 +236,7 @@ struct ceph_msg_footer_old {
 	__u8 flags;
 } __attribute__ ((packed));
 
+// zhou:
 struct ceph_msg_footer {
 	__le32 front_crc, middle_crc, data_crc;
 	// sig holds the 64 bits of the digital signature for the message PLR

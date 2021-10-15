@@ -477,6 +477,8 @@ namespace librbd {
     void *m_data;
   };
 
+
+
   /*
    * Pool stats
    */
@@ -708,20 +710,24 @@ namespace librbd {
     return 0;
   }
 
+  // zhou: README,
   int RBD::create(IoCtx& io_ctx, const char *name, uint64_t size, int *order)
   {
     TracepointProvider::initialize<tracepoint_traits>(get_cct(io_ctx));
     tracepoint(librbd, create_enter, io_ctx.get_pool_name().c_str(), io_ctx.get_id(), name, size, *order);
+    // zhou: defined in "internal.cc"
     int r = librbd::create(io_ctx, name, size, order);
     tracepoint(librbd, create_exit, r, *order);
     return r;
   }
 
+  // zhou:
   int RBD::create2(IoCtx& io_ctx, const char *name, uint64_t size,
 		   uint64_t features, int *order)
   {
     TracepointProvider::initialize<tracepoint_traits>(get_cct(io_ctx));
     tracepoint(librbd, create2_enter, io_ctx.get_pool_name().c_str(), io_ctx.get_id(), name, size, features, *order);
+
     int r = librbd::create(io_ctx, name, size, false, features, order, 0, 0);
     tracepoint(librbd, create2_exit, r, *order);
     return r;
@@ -2426,9 +2432,9 @@ namespace librbd {
   bool Image::snap_exists(const char *snap_name)
   {
     ImageCtx *ictx = (ImageCtx *)ctx;
-    tracepoint(librbd, snap_exists_enter, ictx, ictx->name.c_str(), 
+    tracepoint(librbd, snap_exists_enter, ictx, ictx->name.c_str(),
       ictx->snap_name.c_str(), ictx->read_only, snap_name);
-    bool exists; 
+    bool exists;
     int r = librbd::api::Snapshot<>::exists(ictx, cls::rbd::UserSnapshotNamespace(), snap_name, &exists);
     tracepoint(librbd, snap_exists_exit, r, exists);
     if (r < 0) {
@@ -2442,7 +2448,7 @@ namespace librbd {
   int Image::snap_exists2(const char *snap_name, bool *exists)
   {
     ImageCtx *ictx = (ImageCtx *)ctx;
-    tracepoint(librbd, snap_exists_enter, ictx, ictx->name.c_str(), 
+    tracepoint(librbd, snap_exists_enter, ictx, ictx->name.c_str(),
       ictx->snap_name.c_str(), ictx->read_only, snap_name);
     int r = librbd::api::Snapshot<>::exists(ictx, cls::rbd::UserSnapshotNamespace(), snap_name, exists);
     tracepoint(librbd, snap_exists_exit, r, *exists);
@@ -2574,6 +2580,7 @@ namespace librbd {
     return librbd::api::Snapshot<>::get_id(ictx, snap_name, snap_id);
   }
 
+// zhou: README,
   ssize_t Image::read(uint64_t ofs, size_t len, bufferlist& bl)
   {
     ImageCtx *ictx = (ImageCtx *)ctx;
@@ -2655,6 +2662,7 @@ namespace librbd {
     return r;
   }
 
+  // zhou: README,
   ssize_t Image::write(uint64_t ofs, size_t len, bufferlist& bl)
   {
     ImageCtx *ictx = (ImageCtx *)ctx;
@@ -2753,6 +2761,7 @@ namespace librbd {
     return r;
   }
 
+  // zhou: README,
   int Image::aio_write(uint64_t off, size_t len, bufferlist& bl,
 		       RBD::AioCompletion *c)
   {
@@ -2786,6 +2795,7 @@ namespace librbd {
     return 0;
   }
 
+  // zhou: README,
   int Image::aio_read(uint64_t off, size_t len, bufferlist& bl,
 		      RBD::AioCompletion *c)
   {
@@ -3959,14 +3969,18 @@ extern "C" int rbd_create3(rados_ioctx_t p, const char *name,
   return r;
 }
 
+// zhou:
 extern "C" int rbd_create4(rados_ioctx_t p, const char *name,
 			   uint64_t size, rbd_image_options_t opts)
 {
   librados::IoCtx io_ctx;
   librados::IoCtx::from_rados_ioctx_t(p, io_ctx);
   TracepointProvider::initialize<tracepoint_traits>(get_cct(io_ctx));
+
   tracepoint(librbd, create4_enter, io_ctx.get_pool_name().c_str(), io_ctx.get_id(), name, size, opts);
+
   librbd::ImageOptions opts_(opts);
+
   int r = librbd::create(io_ctx, name, "", size, opts_, "", "", false);
   tracepoint(librbd, create4_exit, r);
   return r;
@@ -5676,7 +5690,7 @@ extern "C" int rbd_snap_get_limit(rbd_image_t image, uint64_t *limit)
 extern "C" int rbd_snap_exists(rbd_image_t image, const char *snapname, bool *exists)
 {
   librbd::ImageCtx *ictx = (librbd::ImageCtx *)image;
-  tracepoint(librbd, snap_exists_enter, ictx, ictx->name.c_str(), 
+  tracepoint(librbd, snap_exists_enter, ictx, ictx->name.c_str(),
              ictx->snap_name.c_str(), ictx->read_only, snapname);
   int r = librbd::api::Snapshot<>::exists(ictx, cls::rbd::UserSnapshotNamespace(), snapname, exists);
   tracepoint(librbd, snap_exists_exit, r, *exists);

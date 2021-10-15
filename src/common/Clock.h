@@ -19,6 +19,7 @@
 
 #include <time.h>
 
+// zhou: get wall time
 static inline utime_t ceph_clock_now()
 {
 #if defined(__linux__)

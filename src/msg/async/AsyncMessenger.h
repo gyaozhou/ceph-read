@@ -43,6 +43,7 @@ class AsyncMessenger;
  * If the Messenger binds to a specific address, the Processor runs
  * and listens for incoming connections.
  */
+// zhou: handle incoming new connection.
 class Processor {
   AsyncMessenger *msgr;
   ceph::NetHandler net;
@@ -62,7 +63,7 @@ class Processor {
 	   entity_addrvec_t* bound_addrs);
   void start();
   void accept();
-};
+}; // zhou: class Processor
 
 /*
  * AsyncMessenger is represented for maintaining a set of asynchronous connections,
@@ -70,8 +71,10 @@ class Processor {
  * AsyncMessenger.
  *
  */
-
+// zhou: this is a concrete class
+//       AsyncMessenger -> SimplePolicyMessenger -> Messenger.
 class AsyncMessenger : public SimplePolicyMessenger {
+
   // First we have the public Messenger interface implementation...
 public:
   /**
@@ -211,9 +214,14 @@ private:
   entity_addrvec_t _filter_addrs(const entity_addrvec_t& addrs);
 
  private:
+  // zhou: Manage threads to handle network stack.
   NetworkStack *stack;
+
+  // zhou: hander for accept connection
   std::vector<Processor*> processors;
   friend class Processor;
+
+  // zhou: used to dispatch messenger
   DispatchQueue dispatch_queue;
 
   // the worker run messenger's cron jobs
@@ -265,12 +273,14 @@ private:
   /// lock to protect the global_seq
   ceph::spinlock global_seq_lock;
 
+
   /**
    * hash map of addresses to Asyncconnection
    *
    * NOTE: a Asyncconnection* with state CLOSED may still be in the map but is considered
    * invalid and can be replaced by anyone holding the msgr lock
    */
+  // zhou: established connections
   ceph::unordered_map<entity_addrvec_t, AsyncConnectionRef> conns;
 
   /**
@@ -278,6 +288,7 @@ private:
    *
    * These are not yet in the conns map.
    */
+  // zhou: accepting connections
   std::set<AsyncConnectionRef> accepting_conns;
 
   /// anonymous outgoing connections
@@ -297,6 +308,7 @@ private:
   ceph::mutex deleted_lock = ceph::make_mutex("AsyncMessenger::deleted_lock");
   std::set<AsyncConnectionRef> deleted_conns;
 
+  // zhou:
   EventCallbackRef reap_handler;
 
   /// internal cluster protocol version, if any, for talking to entities of the same type.
@@ -428,6 +440,6 @@ public:
   /**
    * @} // AsyncMessenger Internals
    */
-} ;
+} ; // zhou: class AsyncMessenger
 
 #endif /* CEPH_ASYNCMESSENGER_H */

@@ -15,6 +15,7 @@ using peer_type_t = int;
  * experiences an error, does the Connection disappear? Can this Messenger
  * re-establish the underlying connection?
  */
+// zhou: README, Policy for IO throttle.
 template<class ThrottleType>
 struct Policy {
   /// If true, the Connection is tossed out on errors.
@@ -32,7 +33,7 @@ struct Policy {
   // open connection with the server.  If a new connection is made,
   // the old (registered) one is closed by the messenger during the accept
   // process.
-  
+
   /**
    *  The throttler is used to limit how much data is held by Messages from
    *  the associated Connection(s). When reading in a new Message, the Messenger
@@ -40,7 +41,7 @@ struct Policy {
    */
   ThrottleType* throttler_bytes;
   ThrottleType* throttler_messages;
-  
+
   /// Specify features supported locally by the endpoint.
 #ifdef MSG_POLICY_UNIT_TESTING
   uint64_t features_supported{CEPH_FEATURES_SUPPORTED_DEFAULT};
@@ -50,7 +51,7 @@ struct Policy {
 
   /// Specify features any remotes must have to talk to this endpoint.
   uint64_t features_required;
-  
+
   Policy()
     : lossy(false), server(false), standby(false), resetcheck(true),
       throttler_bytes(NULL),
@@ -63,7 +64,7 @@ private:
       throttler_bytes(NULL),
       throttler_messages(NULL),
       features_required(req) {}
-  
+
 public:
   static Policy stateful_server(uint64_t req) {
     return Policy(false, true, true, true, true, req);
@@ -86,11 +87,16 @@ public:
   static Policy lossless_client(uint64_t req) {
     return Policy(false, false, false, true, true, req);
   }
-};
+}; // zhou: struct Policy {}
 
+// zhou: a set of policy for different peer type.
+//       Different policy for "entity_name_t::TYPE_MON", "TYPE_MGR", "TYPE_OSD",
+//       "TYPE_CLIENT".
 template<class ThrottleType>
 class PolicySet {
+
   using policy_t = Policy<ThrottleType> ;
+
   /// the default Policy we use for Pipes
   policy_t default_policy;
   /// map specifying different Policies for specific peer types
@@ -111,12 +117,14 @@ public:
       return default_policy;
     }
   }
+  // zhou: policy used for specific peer type
   void set(peer_type_t peer_type, const policy_t& p) {
     policy_map[peer_type] = p;
   }
   const policy_t& get_default() const {
     return default_policy;
   }
+  // zhou: policy for no specific peer type
   void set_default(const policy_t& p) {
     default_policy = p;
   }
@@ -127,6 +135,6 @@ public:
     policy.throttler_bytes = byte_throttle;
     policy.throttler_messages = msg_throttle;
   }
-};
+}; // zhou: class PolicySet
 
 }

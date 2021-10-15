@@ -462,6 +462,7 @@ void generate_transaction(
     });
 }
 
+// zhou: README, mulitply replicas backend, handle transaction.
 void ReplicatedBackend::submit_transaction(
   const hobject_t &soid,
   const object_stat_sum_t &delta_stats,
@@ -511,6 +512,7 @@ void ReplicatedBackend::submit_transaction(
     parent->get_acting_recovery_backfill_shards().begin(),
     parent->get_acting_recovery_backfill_shards().end());
 
+  // zhou: issue IO request to slave OSD
   issue_op(
     soid,
     at_version,
@@ -536,7 +538,7 @@ void ReplicatedBackend::submit_transaction(
     min_last_complete_ondisk,
     true,
     op_t);
-  
+
   op_t.register_on_commit(
     parent->bless_context(
       new C_OSD_OnOpCommit(this, &op)));
@@ -544,7 +546,14 @@ void ReplicatedBackend::submit_transaction(
   vector<ObjectStore::Transaction> tls;
   tls.push_back(std::move(op_t));
 
+  // zhou: PrimaryLogPG::queue_transactions() ->
+  //         PGBackend::Listener->queue_transactions() ->
+  //            BlueStore::queue_transactions()/FileStore::queue_transactions
+  //
+  //       Perform IO request in local/master OSD.
+  //       API defined by class PGBackend::Listener,
   parent->queue_transactions(tls, op.op);
+
   if (at_version != eversion_t()) {
     parent->op_applied(at_version);
   }

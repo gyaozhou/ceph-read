@@ -24,6 +24,7 @@ class AioCompletion;
 class ObjectDispatchSpec;
 class ReadResult;
 
+// zhou: README, slice IO Request into several object, and invoke ObjectRequest.
 template <typename ImageCtxT = ImageCtx>
 class ImageRequest {
 public:

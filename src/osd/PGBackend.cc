@@ -567,6 +567,7 @@ void PGBackend::trim_rollback_object(
     coll, ghobject_t(hoid, old_version, get_parent()->whoami_shard().shard));
 }
 
+// zhou: README,
 PGBackend *PGBackend::build_pg_backend(
   const pg_pool_t &pool,
   const map<string,string>& profile,

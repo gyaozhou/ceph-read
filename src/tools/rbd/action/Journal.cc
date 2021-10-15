@@ -699,6 +699,7 @@ private:
   Stats m_s;
 };
 
+// zhou:
 static int do_export_journal(librados::IoCtx& io_ctx,
 			     const std::string& journal_id,
 			     const std::string& path,

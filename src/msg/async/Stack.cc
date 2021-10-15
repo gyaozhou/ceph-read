@@ -34,11 +34,13 @@
 #undef dout_prefix
 #define dout_prefix *_dout << "stack "
 
+// zhou: README, main loop for worker thread to handle messagers.
 std::function<void ()> NetworkStack::add_thread(Worker* w)
 {
   return [this, w]() {
       rename_thread(w->id);
       const unsigned EventMaxWaitUs = 30000000;
+      // zhou:
       w->center.set_owner();
       ldout(cct, 10) << __func__ << " starting" << dendl;
       w->initialize();
@@ -60,6 +62,7 @@ std::function<void ()> NetworkStack::add_thread(Worker* w)
   };
 }
 
+// zhou: README,
 std::shared_ptr<NetworkStack> NetworkStack::create(CephContext *c,
 						   const std::string &t)
 {
@@ -82,7 +85,8 @@ std::shared_ptr<NetworkStack> NetworkStack::create(CephContext *c,
     ceph_abort();
     return nullptr;
   }
-  
+
+  // zhou: default is 3
   unsigned num_workers = c->_conf->ms_async_op_threads;
   ceph_assert(num_workers > 0);
   if (num_workers >= EventCenter::MAX_EVENTCENTER) {
@@ -108,6 +112,7 @@ NetworkStack::NetworkStack(CephContext *c)
   : cct(c)
 {}
 
+// zhou: README, create threads
 void NetworkStack::start()
 {
   std::unique_lock<decltype(pool_spin)> lk(pool_spin);
@@ -119,6 +124,7 @@ void NetworkStack::start()
   for (Worker* worker : workers) {
     if (worker->is_init())
       continue;
+    // zhou: get a anonymous function
     spawn_worker(add_thread(worker));
   }
   started = true;
@@ -129,6 +135,7 @@ void NetworkStack::start()
   }
 }
 
+// zhou: README, find a thread with lower load.
 Worker* NetworkStack::get_worker()
 {
   ldout(cct, 30) << __func__ << dendl;

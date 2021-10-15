@@ -202,6 +202,7 @@ static int bucket_tree_choose(const struct crush_bucket_tree *bucket,
 	return bucket->h.items[n >> 1];
 }
 
+// zhou: README,
 
 /* straw */
 
@@ -275,9 +276,9 @@ static __u64 crush_ln(unsigned int xin)
  * straw2
  *
  * Suppose we have two osds: osd.0 and osd.1, with weight 8 and 4 respectively, It means:
- *   a). For osd.0, the time interval between each io request apply to exponential distribution 
+ *   a). For osd.0, the time interval between each io request apply to exponential distribution
  *       with lamba equals 8
- *   b). For osd.1, the time interval between each io request apply to exponential distribution 
+ *   b). For osd.1, the time interval between each io request apply to exponential distribution
  *       with lamba equals 4
  *   c). If we apply to each osd's exponential random variable, then the total pgs on each osd
  *       is proportional to its weight.
@@ -309,10 +310,10 @@ static inline __s32 *get_choose_arg_ids(const struct crush_bucket_straw2 *bucket
 /*
  * Compute exponential random variable using inversion method.
  *
- * for reference, see the exponential distribution example at:  
+ * for reference, see the exponential distribution example at:
  * https://en.wikipedia.org/wiki/Inverse_transform_sampling#Examples
  */
-static inline __s64 generate_exponential_distribution(int type, int x, int y, int z, 
+static inline __s64 generate_exponential_distribution(int type, int x, int y, int z,
                                                       int weight)
 {
 	unsigned int u = crush_hash32_3(type, x, y, z);
@@ -364,6 +365,7 @@ static int bucket_straw2_choose(const struct crush_bucket_straw2 *bucket,
 	return bucket->h.items[high];
 }
 
+// zhou: which alg used
 
 static int crush_bucket_choose(const struct crush_bucket *in,
 			       struct crush_work_bucket *work,
@@ -417,6 +419,8 @@ static int is_out(const struct crush_map *map,
 		return 0;
 	return 1;
 }
+
+// zhou: README, multiply replica
 
 /**
  * crush_choose_firstn - choose numrep distinct items of given type
@@ -628,6 +632,7 @@ reject:
 	return outpos;
 }
 
+// zhou: Erasure Code
 
 /**
  * crush_choose_indep: alternative breadth-first positionally stable mapping
@@ -822,6 +827,8 @@ static void crush_choose_indep(const struct crush_map *map,
 	}
 #endif
 }
+
+// zhou: README,
 
 static int crush_do_rule_no_retry(
 	const struct crush_map *map,

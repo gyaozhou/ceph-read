@@ -28,6 +28,7 @@ class SequencerPosition;
  *
  * Implementations of this interface will be used to implement TMAP
  */
+// zhou: omap
 class ObjectMap {
 public:
   CephContext* cct;
@@ -167,6 +168,6 @@ public:
 
   ObjectMap(CephContext* cct, KeyValueDB *db) : cct(cct), db(db) {}
   virtual ~ObjectMap() {}
-};
+}; // zhou:
 
 #endif

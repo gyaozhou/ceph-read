@@ -49,6 +49,7 @@ enum {
   l_objectcacher_last,
 };
 
+// zhou: cache object in OSDC side.
 class ObjectCacher {
   PerfCounters *perfcounter;
  public:
@@ -724,7 +725,7 @@ public:
     ZTracer::Trace trace;
     return flush_set(oset, extents, &trace, onfinish);
   }
-};
+}; // zhou: class ObjectCacher
 
 
 inline std::ostream& operator<<(std::ostream &out,

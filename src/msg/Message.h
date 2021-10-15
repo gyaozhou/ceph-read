@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_MESSAGE_H
@@ -136,6 +136,7 @@
 #define MSG_OSD_PG_UPDATE_LOG_MISSING  114
 #define MSG_OSD_PG_UPDATE_LOG_MISSING_REPLY  115
 
+// zhou: PG operations
 #define MSG_OSD_PG_CREATED      116
 #define MSG_OSD_REP_SCRUBMAP    117
 #define MSG_OSD_PG_RECOVERY_DELETE 118
@@ -245,7 +246,7 @@
 // ======================================================
 
 // abstract Message class
-
+// zhou: abstract Message class, all kinds of message should derive from this class.
 class Message : public RefCountedObject {
 public:
 #ifdef WITH_SEASTAR
@@ -256,8 +257,10 @@ public:
 #endif
 
 protected:
+  // zhou: message header
   ceph_msg_header  header;      // headerelope
   ceph_msg_footer  footer;
+
   ceph::buffer::list       payload;  // "front" unaligned blob
   ceph::buffer::list       middle;   // "middle" unaligned blob
   ceph::buffer::list       data;     // data payload (page-alignment will be preserved where possible)
@@ -306,6 +309,7 @@ public:
 				   &Message::dispatch_q>> Queue;
 
   ceph::mono_time queue_start;
+
 protected:
   CompletionHook* completion_hook = nullptr; // owned by Messenger
 
@@ -543,7 +547,7 @@ public:
   virtual void dump(ceph::Formatter *f) const;
 
   void encode(uint64_t features, int crcflags, bool skip_header_crc = false);
-};
+}; // zhou: class Message
 
 extern Message *decode_message(CephContext *cct,
                                int crcflags,

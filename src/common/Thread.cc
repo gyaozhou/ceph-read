@@ -110,11 +110,12 @@ int Thread::kill(int signal)
     return -EINVAL;
 }
 
+// zhou: create thread
 int Thread::try_create(size_t stacksize)
 {
   pthread_attr_t *thread_attr = NULL;
   pthread_attr_t thread_attr_loc;
-  
+
   stacksize &= CEPH_PAGE_MASK;  // must be multiple of page
   if (stacksize) {
     thread_attr = &thread_attr_loc;
@@ -145,12 +146,13 @@ int Thread::try_create(size_t stacksize)
   #endif
 
   if (thread_attr) {
-    pthread_attr_destroy(thread_attr);	
+    pthread_attr_destroy(thread_attr);
   }
 
   return r;
 }
 
+// zhou: api
 void Thread::create(const char *name, size_t stacksize)
 {
   ceph_assert(strlen(name) < 16);

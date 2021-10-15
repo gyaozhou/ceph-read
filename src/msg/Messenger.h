@@ -90,8 +90,11 @@ struct Interceptor {
 
 #endif
 
+// zhou: README,
 class Messenger {
+
 private:
+
   struct PriorityDispatcher {
     using priority_t = Dispatcher::priority_t;
     priority_t priority;
@@ -101,6 +104,12 @@ private:
       return priority < other.priority;
     }
   };
+
+  // zhou: dispatcher will deliver received messages to upper components
+  //       Any received message will try dispatcher one by one from head to tail.
+  //       Once can be handled, will not continue try.
+  //       So, one message will only deliver one time.
+
   std::vector<PriorityDispatcher> dispatchers;
   std::vector<PriorityDispatcher> fast_dispatchers;
 
@@ -138,6 +147,8 @@ public:
   CephContext *cct;
   int crcflags;
 
+  // zhou: "Throttle", common/Throttle.h, "Throttles the maximum number of active requests."
+  //       "ceph::net::Policy" is defined in src/msg/Policy.h
   using Policy = ceph::net::Policy<Throttle>;
 
 public:
@@ -171,11 +182,17 @@ public:
    * @param lname logical name of the messenger in this process (e.g., "client")
    * @param nonce nonce value to uniquely identify this instance on the current host
    */
+
+  // zhou: "type" is "async+posix";
+  //       "lname" is "client/cluster/hb_back_client/..."
+  //       Get Concrete object derived from Messenger. Only AsyncMessenger be used.
   static Messenger *create(CephContext *cct,
                            const std::string &type,
                            entity_name_t name,
 			   std::string lname,
                            uint64_t nonce);
+
+  // zhou: get random number as nonce
 
   static uint64_t get_random_nonce();
 
@@ -191,6 +208,7 @@ public:
    * @param cct context
    * @param lname logical name of the messenger in this process (e.g., "client")
    */
+  // zhou: a slightly simpler interface for clients with several default arguments
   static Messenger *create_client_messenger(CephContext *cct, std::string lname);
 
   /**
@@ -205,6 +223,7 @@ public:
    * @return A const reference to the name this Messenger
    * currently believes to be its own.
    */
+  // zhou: "entity_name_t" set by Messenger::create()
   const entity_name_t& get_myname() { return my_name; }
 
   /**
@@ -252,6 +271,7 @@ protected:
     my_addrs = a;
     set_endpoint_addr(a.front(), my_name);
   }
+
 public:
   /**
    * @return the zipkin trace endpoint
@@ -310,6 +330,7 @@ public:
    * @param p The cluster protocol to use. Defined externally.
    */
   virtual void set_cluster_protocol(int p) = 0;
+
   /**
    * set a policy which is applied to all peers who do not have a type-specific
    * Policy.
@@ -319,6 +340,7 @@ public:
    * @param p The Policy to apply.
    */
   virtual void set_default_policy(Policy p) = 0;
+
   /**
    * set a policy which is applied to all peers of the given type.
    * This is an init-time function and cannot be called after calling
@@ -346,6 +368,7 @@ public:
    * @return A const Policy reference.
    */
   virtual Policy get_default_policy() = 0;
+
   /**
    * set Throttlers applied to all Messages from the given type of peer
    *
@@ -666,7 +689,7 @@ public:
 	ceph_assert(r == 0);
       }
     }
-  };
+  }; // zhou: struct sigpipe_stopper {}
 #  define MSGR_SIGPIPE_STOPPER Messenger::sigpipe_stopper stopper();
 #else
 #  define MSGR_SIGPIPE_STOPPER
@@ -697,6 +720,7 @@ public:
    * @param m The Message we are fast dispatching.
    * If none of our Dispatchers can handle it, ceph_abort().
    */
+  // zhou:
   void ms_fast_dispatch(const ceph::ref_t<Message> &m) {
     m->set_dispatch_stamp(ceph_clock_now());
     for ([[maybe_unused]] const auto& [priority, dispatcher] : fast_dispatchers) {
@@ -725,6 +749,7 @@ public:
    *
    *  @param m The Message to deliver.
    */
+  // zhou: README, deliver a single message to upper
   void ms_deliver_dispatch(const ceph::ref_t<Message> &m) {
     m->set_dispatch_stamp(ceph_clock_now());
     for ([[maybe_unused]] const auto& [priority, dispatcher] : dispatchers) {
@@ -839,7 +864,7 @@ public:
   /**
    * @} // Dispatcher Interfacing
    */
-};
+}; // zhou: class Messenger
 
 
 

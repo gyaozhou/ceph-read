@@ -27,10 +27,12 @@ void cls_free(void *p)
   free(p);
 }
 
+// zhou: README,
 int cls_register(const char *name, cls_handle_t *handle)
 {
   ClassHandler::ClassData *cls = \
     ClassHandler::get_instance().register_class(name);
+
   *handle = (cls_handle_t)cls;
   return (cls != NULL);
 }
@@ -42,14 +44,17 @@ int cls_unregister(cls_handle_t handle)
   return 1;
 }
 
+// zhou: README,
 int cls_register_method(cls_handle_t hclass, const char *method,
                         int flags,
                         cls_method_call_t class_call, cls_method_handle_t *handle)
 {
   if (!(flags & (CLS_METHOD_RD | CLS_METHOD_WR)))
     return -EINVAL;
+
   ClassHandler::ClassData *cls = (ClassHandler::ClassData *)hclass;
   cls_method_handle_t hmethod =(cls_method_handle_t)cls->register_method(method, flags, class_call);
+
   if (handle)
     *handle = hmethod;
   return (hmethod != NULL);

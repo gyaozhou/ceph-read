@@ -744,10 +744,10 @@ inline namespace v14_2_0 {
     /**
      * Extensible tier
      *
-     * set_chunk: make a chunk pointing a part of the source object at the target 
+     * set_chunk: make a chunk pointing a part of the source object at the target
      * 		  object
      *
-     * @param src_offset [in] source offset to indicate the start position of 
+     * @param src_offset [in] source offset to indicate the start position of
      * 				a chunk in the source object
      * @param src_length [in] source length to set the length of the chunk
      * @param tgt_oid    [in] target object's id to set a chunk
@@ -1394,6 +1394,9 @@ inline namespace v14_2_0 {
 
   CEPH_RADOS_API std::ostream& operator<<(std::ostream&, const PlacementGroup&);
 
+
+
+    // zhou: README, class Rados
   class CEPH_RADOS_API Rados
   {
   public:
@@ -1568,6 +1571,4 @@ inline namespace v14_2_0 {
 
 } // namespace v14_2_0
 } // namespace librados
-
 #endif
-

@@ -51,6 +51,7 @@ WRITE_CLASS_ENCODER(bluestore_bdev_label_t)
 
 std::ostream& operator<<(std::ostream& out, const bluestore_bdev_label_t& l);
 
+// zhou: PG on disk metadata?
 /// collection metadata
 struct bluestore_cnode_t {
   uint32_t bits;   ///< how many bits of coll pgid are significant
@@ -93,8 +94,9 @@ struct bluestore_interval_t
 
 };
 
+// zhou: physical address range
 /// pextent: physical extent
-struct bluestore_pextent_t : public bluestore_interval_t<uint64_t, uint32_t> 
+struct bluestore_pextent_t : public bluestore_interval_t<uint64_t, uint32_t>
 {
   bluestore_pextent_t() {}
   bluestore_pextent_t(uint64_t o, uint64_t l) : bluestore_interval_t(o, l) {}
@@ -265,12 +267,12 @@ struct bluestore_blob_use_tracker_t {
   uint32_t num_au;   // Amount of allocation units tracked
                      // == 0 if single unit or the whole blob is tracked
   uint32_t alloc_au; // Amount of allocation units allocated
-                       
+
   union {
     uint32_t* bytes_per_au;
     uint32_t total_bytes;
   };
-  
+
   bluestore_blob_use_tracker_t()
     : au_size(0), num_au(0), alloc_au(0), bytes_per_au(nullptr) {
   }
@@ -412,7 +414,7 @@ struct bluestore_blob_use_tracker_t {
 	   uint32_t start, uint32_t len);
   bool equal(
     const bluestore_blob_use_tracker_t& other) const;
-    
+
   void bound_encode(size_t& p) const {
     denc_varint(au_size, p);
     if (au_size) {
@@ -468,6 +470,7 @@ private:
 WRITE_CLASS_DENC(bluestore_blob_use_tracker_t)
 std::ostream& operator<<(std::ostream& out, const bluestore_blob_use_tracker_t& rm);
 
+// zhou:
 /// blob: a piece of data on disk
 struct bluestore_blob_t {
 private:
@@ -984,7 +987,7 @@ struct bluestore_shared_blob_t {
   bluestore_shared_blob_t() : sbid(0) {}
   bluestore_shared_blob_t(uint64_t _sbid) : sbid(_sbid) {}
   bluestore_shared_blob_t(uint64_t _sbid,
-			  bluestore_extent_ref_map_t&& _ref_map ) 
+			  bluestore_extent_ref_map_t&& _ref_map )
     : sbid(_sbid), ref_map(std::move(_ref_map)) {}
 
   DENC(bluestore_shared_blob_t, v, p) {
@@ -1005,8 +1008,9 @@ WRITE_CLASS_DENC(bluestore_shared_blob_t)
 
 std::ostream& operator<<(std::ostream& out, const bluestore_shared_blob_t& o);
 
+// zhou: object on disk
 /// onode: per-object metadata
-struct bluestore_onode_t {
+struct bluestore_onode_t
   uint64_t nid = 0;                    ///< numeric id (locally unique)
   uint64_t size = 0;                   ///< object size
   // mempool to be assigned to buffer::ptr manually

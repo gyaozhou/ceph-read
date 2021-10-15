@@ -729,7 +729,7 @@ public:
 
   /**
    * return ancestor of the given type, or 0 if none
-   * can pass in a specific crush **rule** to return ancestor from that rule only 
+   * can pass in a specific crush **rule** to return ancestor from that rule only
    * (parent is always a bucket and thus <0)
    */
   int get_parent_of_type(int id, int type, int rule = -1) const;
@@ -1605,6 +1605,8 @@ public:
     }
     return 1;
   }
+
+  // zhou: README,
 
   template<typename WeightVector>
   void do_rule(int rule, int x, std::vector<int>& out, int maxout,

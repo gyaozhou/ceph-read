@@ -7,6 +7,7 @@
 using std::map;
 using std::string;
 
+// zhou: factory
 KeyValueDB *KeyValueDB::create(CephContext *cct, const string& type,
 			       const string& dir,
 			       map<string,string> options,

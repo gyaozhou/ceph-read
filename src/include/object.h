@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_OBJECT_H
@@ -34,6 +34,7 @@
 #include "encoding.h"
 #include "ceph_hash.h"
 
+// zhou: just includes object name.
 struct object_t {
   std::string name;
 
@@ -72,6 +73,7 @@ struct object_t {
     o.push_back(new object_t("myobject"));
   }
 };
+// zhou: struct object_t {}
 WRITE_CLASS_ENCODER(object_t)
 
 inline std::ostream& operator<<(std::ostream& out, const object_t& o) {
@@ -96,7 +98,7 @@ struct file_object_t {
   file_object_t(uint64_t i=0, uint64_t b=0) : ino(i), bno(b) {
     buf[0] = 0;
   }
-  
+
   const char *c_str() const {
     if (!buf[0])
       snprintf(buf, sizeof(buf), "%llx.%08llx", (long long unsigned)ino, (long long unsigned)bno);
@@ -175,6 +177,9 @@ struct formatter<snapid_t> {
   }
 };
 } // namespace fmt
+
+
+// zhou: object_t with snapshot info.
 
 struct sobject_t {
   object_t oid;

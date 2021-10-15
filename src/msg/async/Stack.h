@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -47,6 +47,7 @@ struct SocketOptions {
 };
 
 /// \cond internal
+// zhou:
 class ServerSocketImpl {
  public:
   unsigned addr_type; ///< entity_addr_t::TYPE_*
@@ -68,6 +69,8 @@ class ServerSocketImpl {
 ///
 /// A \c ConnectedSocket represents a full-duplex stream between
 /// two endpoints, a local endpoint and a remote endpoint.
+
+// zhou:
 class ConnectedSocket {
   std::unique_ptr<ConnectedSocketImpl> _csi;
 
@@ -133,13 +136,14 @@ class ConnectedSocket {
   explicit operator bool() const {
     return _csi.get();
   }
-};
+}; // zhou: class ConnectedSocket
 /// @}
 
 /// \addtogroup networking-module
 /// @{
 
 /// A listening socket, waiting to accept incoming network connections.
+// zhou: used for accept TCP connection.
 class ServerSocket {
   std::unique_ptr<ServerSocketImpl> _ssi;
  public:
@@ -188,7 +192,7 @@ class ServerSocket {
   explicit operator bool() const {
     return _ssi.get();
   }
-};
+}; // zhou: class ServerSocket
 /// @}
 
 class NetworkStack;
@@ -225,6 +229,9 @@ enum {
   l_msgr_labeled_last,
 };
 
+
+// zhou: PosixWorker -> Worker, a thread
+
 class Worker {
   std::mutex init_lock;
   std::condition_variable init_cond;
@@ -239,6 +246,8 @@ class Worker {
   unsigned id;
 
   std::atomic_uint references;
+
+  // zhou: used to manage thread owns fd's events
   EventCenter center;
 
   Worker(const Worker&) = delete;
@@ -339,8 +348,13 @@ class Worker {
     init_lock.unlock();
     done = false;
   }
-};
+}; // zhou: class Worker
 
+
+// zhou: class PosixNetworkStack/DPDKStack/RDMAStack derived from this abstract class.
+//       DPDK related files locate at src/msg/async/dpdk/
+//       RDMA related files locate at src/msg/async/rdma/
+//       Manage threads to handle network stack.
 class NetworkStack {
   ceph::spinlock pool_spin;
   bool started = false;
@@ -357,6 +371,7 @@ class NetworkStack {
 
  protected:
   CephContext *cct;
+  // zhou: each worker is a thread, spawn by PosixNetworkStack::spawn_worker().
   std::vector<Worker*> workers;
 
   explicit NetworkStack(CephContext *c);
@@ -368,6 +383,7 @@ class NetworkStack {
       delete w;
   }
 
+  // zhou: factory
   static std::shared_ptr<NetworkStack> create(
     CephContext *c, const std::string &type);
 
@@ -380,6 +396,7 @@ class NetworkStack {
   virtual bool support_local_listen_table() const { return false; }
   virtual bool nonblock_connect_need_writable_event() const { return true; }
 
+  // zhou: create threads
   void start();
   void stop();
   virtual Worker *get_worker();
@@ -391,12 +408,13 @@ class NetworkStack {
     return workers.size();
   }
 
+  // zhou: create thread
   // direct is used in tests only
   virtual void spawn_worker(std::function<void ()> &&) = 0;
   virtual void join_worker(unsigned i) = 0;
 
   virtual bool is_ready() { return true; };
   virtual void ready() { };
-};
+}; // zhou: class NetworkStack
 
 #endif //CEPH_MSG_ASYNC_STACK_H

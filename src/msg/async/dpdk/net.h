@@ -99,6 +99,7 @@ class l3_protocol {
 class DPDKDevice;
 struct ipv4_address;
 
+// zhou:
 class interface {
   CephContext *cct;
   struct l3_rx_stream {
@@ -133,6 +134,6 @@ class interface {
   uint16_t hw_queues_count() const;
   void arp_learn(ethernet_address l2, ipv4_address l3);
   friend class l3_protocol;
-};
+}; // zhou: class interface
 
 #endif //CEPH_MSG_DPDK_NET_H

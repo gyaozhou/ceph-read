@@ -10,6 +10,8 @@
 
 class ConfigValues;
 
+// zhou: README,
+
 // @c ObserverMgr manages a set of config observers which are interested in
 // the changes of settings at runtime.
 template<class ConfigObs>
@@ -43,11 +45,13 @@ public:
                        config_gather_cb callback, std::ostream *oss);
   bool is_tracking(const std::string& name) const override;
 
+
 private:
   // Maps configuration options to the observer listening for them.
   using obs_map_t = std::multimap<std::string, config_obs_ptr>;
   obs_map_t observers;
 };
+// zhou: class ObserverMgr
 
 // we could put the implementations in a .cc file, and only instantiate the
 // used template specializations explicitly, but that forces us to involve

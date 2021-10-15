@@ -110,6 +110,7 @@ namespace ceph::common {
  * CephContext contains the configuration, the dout object, and anything else
  * that you might want to pass to libcommon with every function call.
  */
+// zhou: README, once use functions in src/common/, this is class is required.
 class CephContext {
 public:
   CephContext(uint32_t module_type_,
@@ -402,13 +403,15 @@ private:
   void _refresh_perf_values();
 
   friend class CephContextObs;
-};
+}; // zhou: class CephContext
 #ifdef __cplusplus
 }
 #endif
 #endif	// WITH_SEASTAR
 
 #if !(defined(WITH_SEASTAR) && !defined(WITH_ALIEN)) && defined(__cplusplus)
+// zhou: in order to support "boost::intrusive_ptr<CephContext>"
+//       Any class want be used like this way, should implement these two functions.
 namespace ceph::common {
 inline void intrusive_ptr_add_ref(CephContext* cct)
 {

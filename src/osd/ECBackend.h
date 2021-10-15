@@ -34,6 +34,8 @@ struct ECSubReadReply;
 
 struct RecoveryMessages;
 
+// zhou: README, Erasure Code over backend storage
+
 class ECBackend : public PGBackend, public ECCommon {
 public:
   RecoveryHandle *open_recovery_op() override;

@@ -557,6 +557,7 @@ int validate_pool(IoCtx &io_ctx, CephContext *cct) {
     return 0;
   }
 
+  // zhou: README,
   int create(librados::IoCtx& io_ctx, const char *imgname, uint64_t size,
 	     int *order)
   {
@@ -575,6 +576,7 @@ int validate_pool(IoCtx &io_ctx, CephContext *cct) {
     return r;
   }
 
+  // zhou: used a lot
   int create(IoCtx& io_ctx, const char *imgname, uint64_t size,
 	     bool old_format, uint64_t features, int *order,
 	     uint64_t stripe_unit, uint64_t stripe_count)
@@ -607,6 +609,7 @@ int validate_pool(IoCtx &io_ctx, CephContext *cct) {
     return r;
   }
 
+  // zhou:
   int create(IoCtx& io_ctx, const std::string &image_name,
 	     const std::string &image_id, uint64_t size,
 	     ImageOptions& opts,
@@ -662,12 +665,14 @@ int validate_pool(IoCtx &io_ctx, CephContext *cct) {
     }
 
     if (old_format) {
+      // zhou: deprecated
       if ( !getenv("RBD_FORCE_ALLOW_V1") ) {
         lderr(cct) << "Format 1 image creation unsupported. " << dendl;
         return -EINVAL;
       }
       lderr(cct) << "Forced V1 image creation. " << dendl;
       r = create_v1(io_ctx, image_name.c_str(), size, order);
+
     } else {
       AsioEngine asio_engine(io_ctx);
 

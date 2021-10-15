@@ -28,6 +28,7 @@
 
 extern pid_t ceph_gettid();
 
+// zhou: could be replaced with C++11 std::thread
 class Thread {
  private:
   pthread_t thread_id;
@@ -56,8 +57,11 @@ class Thread {
   bool is_started() const;
   bool am_self() const;
   int kill(int signal);
+
+  // zhou: create thread
   int try_create(size_t stacksize);
   void create(const char *name, size_t stacksize = 0);
+
   int join(void **prval = 0);
   int detach();
   int set_affinity(int cpuid);

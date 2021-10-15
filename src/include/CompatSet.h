@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_COMPATSET_H
@@ -24,6 +24,8 @@
 #include "include/types.h"
 #include "common/Formatter.h"
 
+// zhou: manage feature sets, including encode/decode for network/file and
+//       read/write related feature sets.
 struct CompatSet {
 
   struct Feature {
@@ -35,6 +37,7 @@ struct CompatSet {
 
   class FeatureSet {
     uint64_t mask;
+    // zhou: <Feature.id, Feature.name>
     std::map<uint64_t, std::string> names;
 
   public:
@@ -42,9 +45,12 @@ struct CompatSet {
     friend class CephCompatSet_AllSet_Test;
     friend class CephCompatSet_other_Test;
     friend class CephCompatSet_merge_Test;
+
     friend std::ostream& operator<<(std::ostream& out, const CompatSet::FeatureSet& fs);
     friend std::ostream& operator<<(std::ostream& out, const CompatSet& compat);
+
     FeatureSet() : mask(1), names() {}
+
     void insert(const Feature& f) {
       ceph_assert(f.id > 0);
       ceph_assert(f.id < 64);
@@ -79,6 +85,7 @@ struct CompatSet {
 
     void encode(ceph::buffer::list& bl) const {
       using ceph::encode;
+      // zhou: defined in src/include/encoding.h
       /* See below, mask always has the lowest bit set in memory, but
        * unset in the encoding */
       encode(mask & (~(uint64_t)1), bl);
@@ -118,7 +125,7 @@ struct CompatSet {
 	f->dump_string(s, p->second);
       }
     }
-  };
+  }; // zhou: class FeatureSet
 
   // These features have no impact on the read / write status
   FeatureSet compat;
@@ -194,7 +201,7 @@ struct CompatSet {
     }
     return diff;
   }
-  
+
   /* Merge features supported by other CompatSet into this one.
    * Return: true if some features were merged
    */
@@ -262,7 +269,7 @@ struct CompatSet {
     o.back()->ro_compat.insert(Feature(4, "four"));
     o.back()->incompat.insert(Feature(3, "three"));
   }
-};
+}; // zhou: struct CompatSet {}
 WRITE_CLASS_ENCODER(CompatSet)
 
 inline std::ostream& operator<<(std::ostream& out, const CompatSet::Feature& f)

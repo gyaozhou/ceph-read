@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -74,6 +74,7 @@ struct FiredFileEvent {
  * For example, Linux will use epoll(2), BSD will use kqueue(2) and select will
  * be used for worst condition.
  */
+// zhou: EpollDriver/SelectDriver/DPDKDriver will derive from it.
 class EventDriver {
  public:
   virtual ~EventDriver() {}       // we want a virtual destructor!!!
@@ -88,6 +89,7 @@ class EventDriver {
 /*
  * EventCenter maintain a set of file descriptor and handle registered events.
  */
+// zhou: a framework to handle events from fd
 class EventCenter {
  public:
   // should be enough;
@@ -165,7 +167,10 @@ class EventCenter {
   std::atomic_ulong external_num_events;
   std::deque<EventCallbackRef> external_events;
   std::vector<FileEvent> file_events;
+
+  // zhou: select/epoll/dpdk
   EventDriver *driver;
+
   std::multimap<clock_type::time_point, TimeEvent> time_events;
   // Keeps track of all of the pollers currently defined.  We don't
   // use an intrusive list here because it isn't reentrant: we need
@@ -173,8 +178,11 @@ class EventCenter {
   std::vector<Poller*> pollers;
   std::map<uint64_t, std::multimap<clock_type::time_point, TimeEvent>::iterator> event_map;
   uint64_t time_event_next_id;
+
+  // zhou: pipe used to wait up epoll to add more events interesting.
   int notify_receive_fd;
   int notify_send_fd;
+
   ceph::NetHandler net;
   EventCallbackRef notify_handler;
   unsigned center_id;
@@ -264,6 +272,6 @@ class EventCenter {
       event.wait();
     }
   };
-};
+}; // zhou: class EventCenter
 
 #endif

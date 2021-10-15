@@ -50,6 +50,7 @@ typedef std::shared_ptr<const OSDMap> OSDMapRef;
   * 3) Handling object access
   * 4) Handling scrub, deep-scrub, repair
   */
+ // zhou: README,
  class PGBackend {
  public:
   virtual int object_stat(const hobject_t &hoid, struct stat* st) { return -1;};
@@ -59,6 +60,7 @@ typedef std::shared_ptr<const OSDMap> OSDMapRef;
    const coll_t coll;
    ObjectStore::CollectionHandle &ch;
  public:
+
    /**
     * Provides interfaces for PGBackend callbacks
     *
@@ -66,6 +68,9 @@ typedef std::shared_ptr<const OSDMap> OSDMapRef;
     * implementation holding a lock and that the callbacks are
     * called under the same locks.
     */
+   // zhou: callbacks used to register all kinds of object store implementations.
+   //       The client of PGBackend, should implemented such interface to handle
+   //       following operations of PGBackend.
    class Listener {
    public:
      /// Debugging
@@ -152,6 +157,7 @@ typedef std::shared_ptr<const OSDMap> OSDMapRef;
        ObjectStore::Transaction&& t,
        OpRequestRef op = OpRequestRef()
        ) = 0;
+     // zhou:
      virtual void queue_transactions(
        std::vector<ObjectStore::Transaction>& tls,
        OpRequestRef op = OpRequestRef()
@@ -290,8 +296,13 @@ typedef std::shared_ptr<const OSDMap> OSDMapRef;
      virtual bool maybe_preempt_replica_scrub(const hobject_t& oid) = 0;
      virtual struct ECListener *get_eclistener() = 0;
      virtual ~Listener() {}
-   };
+   }; // zhou: class Listener
+
+   // zhou: refer to PrimaryLogPG Listener related API.
+   //       PGBackend(and its derived class) doesn't own ObjectStore(and its derived class).
+   //       PrimaryLogPG's Listener API is a interface for PGBackend invoke ObjectStore API.
    Listener *parent;
+
    Listener *get_parent() const { return parent; }
    PGBackend(CephContext* cct, Listener *l, ObjectStore *store, const coll_t &coll,
 	     ObjectStore::CollectionHandle &ch) :
@@ -427,6 +438,7 @@ typedef std::shared_ptr<const OSDMap> OSDMapRef;
 
    virtual ~PGBackend() {}
 
+   // zhou:
    /// execute implementation specific transaction
    virtual void submit_transaction(
      const hobject_t &hoid,               ///< [in] object
@@ -586,6 +598,6 @@ typedef std::shared_ptr<const OSDMap> OSDMapRef;
      ObjectStore::CollectionHandle &ch,
      ObjectStore *store,
      CephContext *cct);
-};
+ }; // zhou: class PGBackend
 
 #endif

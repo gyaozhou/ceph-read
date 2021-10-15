@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,14 +7,14 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef CEPH_REFCOUNTEDOBJ_H
 #define CEPH_REFCOUNTEDOBJ_H
- 
+
 #include "common/ceph_mutex.h"
 #include "common/ref.h"
 #include "include/common_fwd.h"
@@ -41,6 +41,8 @@
  *
  */
 namespace TOPNSPC::common {
+
+// zhou:
 class RefCountedObject {
 public:
   void set_cct(CephContext *c) {
@@ -134,8 +136,8 @@ private:
  * immediately, a put_wait() will return only when the object is destroyed.
  * e.g., useful when we want to wait for a specific event completion. We
  * use RefCountedCond, as the condition can be referenced after the object
- * destruction. 
- *    
+ * destruction.
+ *
  */
 struct RefCountedWaitObject {
   std::atomic<uint64_t> nref = { 1 };

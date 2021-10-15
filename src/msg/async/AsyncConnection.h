@@ -50,7 +50,9 @@ static const int ASYNC_IOV_MAX = (IOV_MAX >= 1024 ? IOV_MAX / 4 : IOV_MAX);
  * descriptor broken, AsyncConnection will maintain the message queue and
  * sequence, try to reconnect peer endpoint.
  */
+// zhou: README,
 class AsyncConnection : public Connection {
+
   ssize_t read(unsigned len, char *buffer,
                std::function<void(char *, ssize_t)> callback);
   ssize_t read_until(unsigned needed, char *p);
@@ -181,6 +183,7 @@ public:
   Messenger::Policy policy;
 private:
 
+  // zhou:
   DispatchQueue *dispatch_queue;
 
   // lockfree, only used in own thread

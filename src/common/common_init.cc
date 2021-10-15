@@ -27,6 +27,7 @@
 #define dout_subsys ceph_subsys_
 
 #ifndef WITH_SEASTAR
+// zhou: README,
 CephContext *common_preinit(const CephInitParameters &iparams,
 			    enum code_environment_t code_env, int flags)
 {
@@ -87,6 +88,7 @@ void complain_about_parse_error(CephContext *cct,
 
 /* Please be sure that this can safely be called multiple times by the
  * same application. */
+// zhou:
 void common_init_finish(CephContext *cct)
 {
   // only do this once per cct

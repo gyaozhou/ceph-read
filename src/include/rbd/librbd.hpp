@@ -284,6 +284,7 @@ public:
   int list2(IoCtx& io_ctx, std::vector<image_spec_t>* images);
 
   int create(IoCtx& io_ctx, const char *name, uint64_t size, int *order);
+
   int create2(IoCtx& io_ctx, const char *name, uint64_t size,
 	      uint64_t features, int *order);
   int create3(IoCtx& io_ctx, const char *name, uint64_t size,

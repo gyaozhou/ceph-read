@@ -764,6 +764,7 @@ int detach(cls_method_context_t hctx, bool legacy_api) {
  * Output:
  * @return 0 on success, negative error code on failure
  */
+// zhou: README,
 int create(cls_method_context_t hctx, bufferlist *in, bufferlist *out)
 {
   string object_prefix;
@@ -2865,7 +2866,7 @@ int set_access_timestamp(cls_method_context_t hctx, bufferlist *in, bufferlist *
    int r = check_exists(hctx);
    if(r < 0)
      return r;
-   
+
    utime_t timestamp = ceph_clock_now();
    r = write_key(hctx, "access_timestamp", timestamp);
    if(r < 0) {
@@ -2891,7 +2892,7 @@ int set_modify_timestamp(cls_method_context_t hctx, bufferlist *in, bufferlist *
    int r = check_exists(hctx);
    if(r < 0)
      return r;
-   
+
    utime_t timestamp = ceph_clock_now();
    r = write_key(hctx, "modify_timestamp", timestamp);
    if(r < 0) {
@@ -4560,7 +4561,7 @@ int old_snapshot_rename(cls_method_context_t hctx, bufferlist *in, bufferlist *o
   dst_snap_name = dst.c_str();
 
   const char *cur_snap_name;
-  for (cur_snap_name = snap_names; cur_snap_name < end; 
+  for (cur_snap_name = snap_names; cur_snap_name < end;
     cur_snap_name += strlen(cur_snap_name) + 1) {
     if (strcmp(cur_snap_name, dst_snap_name) == 0)
       return -EEXIST;
@@ -4578,7 +4579,7 @@ int old_snapshot_rename(cls_method_context_t hctx, bufferlist *in, bufferlist *o
     CLS_ERR("couldn't find snap %llu\n", (unsigned long long)src_snap_id.val);
     return -ENOENT;
   }
-  
+
   CLS_LOG(20, "rename snap with snap id %llu to dest name %s", (unsigned long long)src_snap_id.val, dst_snap_name);
   header->snap_names_len  = header->snap_names_len - strlen(snap_names) + dst.length();
 
@@ -8076,6 +8077,7 @@ int sparsify(cls_method_context_t hctx, bufferlist *in, bufferlist *out)
   return 0;
 }
 
+// zhou: README,
 CLS_INIT(rbd)
 {
   CLS_LOG(20, "Loaded rbd class!");
@@ -8212,6 +8214,7 @@ CLS_INIT(rbd)
   cls_method_handle_t h_assert_snapc_seq;
   cls_method_handle_t h_sparsify;
 
+  // zhou:
   cls_register("rbd", &h_class);
   cls_register_cxx_method(h_class, "create",
 			  CLS_METHOD_RD | CLS_METHOD_WR,

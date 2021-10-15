@@ -27,6 +27,7 @@ class Connection;
 class CryptoKey;
 class KeyStore;
 
+// zhou: README, abstract class for send messages.
 class Dispatcher {
 public:
   /* Ordering of dispatch for a list of Dispatchers. */
@@ -75,6 +76,7 @@ public:
    * @returns True if the Dispatcher can handle any messages via
    * fast dispatch; false otherwise.
    */
+  // zhou:
   virtual bool ms_can_fast_dispatch_any() const { return false; }
   /**
    * Perform a "fast dispatch" on a given message. See
@@ -232,6 +234,6 @@ protected:
 private:
   explicit Dispatcher(const Dispatcher &rhs);
   Dispatcher& operator=(const Dispatcher &rhs);
-};
+}; // zhou: class Dispatcher
 
 #endif

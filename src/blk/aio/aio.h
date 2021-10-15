@@ -18,8 +18,11 @@
 #include "include/buffer.h"
 #include "include/types.h"
 
+// zhou:
 struct aio_t {
+
 #if defined(HAVE_LIBAIO)
+  // zhou:
   struct iocb iocb{};  // must be first element; see shenanigans in aio_queue_t
 #elif defined(HAVE_POSIXAIO)
   //  static long aio_listio_max = -1;
@@ -29,6 +32,7 @@ struct aio_t {
   } aio;
   int n_aiocb;
 #endif
+
   void *priv;
   int fd;
   boost::container::small_vector<iovec,4> iov;
@@ -82,8 +86,9 @@ struct aio_t {
   long get_return_value() {
     return rval;
   }
-};
+}; // zhou: struct aio_t {}
 
+// zhou: NOT the member of "aio_t"
 std::ostream& operator<<(std::ostream& os, const aio_t& aio);
 
 typedef boost::intrusive::list<
@@ -93,6 +98,7 @@ typedef boost::intrusive::list<
     boost::intrusive::list_member_hook<>,
     &aio_t::queue_item> > aio_list_t;
 
+// zhou: queue to manage aio request
 struct io_queue_t {
   typedef std::list<aio_t>::iterator aio_iter;
 
@@ -105,9 +111,12 @@ struct io_queue_t {
   virtual int get_next_completed(int timeout_ms, aio_t **paio, int max) = 0;
 };
 
+// zhou:
 struct aio_queue_t final : public io_queue_t {
   int max_iodepth;
+
 #if defined(HAVE_LIBAIO)
+  // zhou:
   io_context_t ctx;
 #elif defined(HAVE_POSIXAIO)
   int ctx;
@@ -121,9 +130,11 @@ struct aio_queue_t final : public io_queue_t {
     ceph_assert(ctx == 0);
   }
 
+  // zhou:
   int init(std::vector<int> &fds) final {
     (void)fds;
     ceph_assert(ctx == 0);
+
 #if defined(HAVE_LIBAIO)
     int r = io_setup(max_iodepth, &ctx);
     if (r < 0) {
@@ -141,6 +152,7 @@ struct aio_queue_t final : public io_queue_t {
       return 0;
 #endif
   }
+
   void shutdown() final {
     if (ctx) {
 #if defined(HAVE_LIBAIO)
@@ -156,4 +168,4 @@ struct aio_queue_t final : public io_queue_t {
   int submit_batch(aio_iter begin, aio_iter end, uint16_t aios_size,
 		   void *priv, int *retries) final;
   int get_next_completed(int timeout_ms, aio_t **paio, int max) final;
-};
+}; // zhou: struct aio_queue_t final : public io_queue_t

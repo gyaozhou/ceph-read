@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -10,9 +10,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 
@@ -58,7 +58,7 @@ class health_check_map_t;
  * marked down.
  *
  * the lost_at is used to allow build_prior to proceed without waiting
- * for an osd to recover.  In certain cases, progress may be blocked 
+ * for an osd to recover.  In certain cases, progress may be blocked
  * because an osd is down that may contain updates (i.e., a pg may have
  * gone rw during an interval).  If the osd can't be brought online, we
  * can force things to proceed knowing that we _might_ be losing some
@@ -73,7 +73,7 @@ struct osd_info_t {
   epoch_t up_thru;   // lower bound on actual osd death (if > up_from)
   epoch_t down_at;   // upper bound on actual osd death (if > up_from)
   epoch_t lost_at;   // last epoch we decided data was "lost"
-  
+
   osd_info_t() : last_clean_begin(0), last_clean_end(0),
 		 up_from(0), up_thru(0), down_at(0), lost_at(0) {}
 
@@ -353,6 +353,7 @@ WRITE_CLASS_ENCODER(PGTempMap)
 
 /** OSDMap
  */
+// zhou: README,
 class OSDMap {
 public:
   MEMPOOL_CLASS_HELPERS();
@@ -533,7 +534,7 @@ public:
 
     void set_allow_crimson() { mutate_allow_crimson = mutate_allow_crimson_t::SET; }
   };
-  
+  // zhou: class Incremental
 private:
   uuid_d fsid;
   epoch_t epoch;        // what epoch of the osd cluster descriptor is this
@@ -676,7 +677,8 @@ private:
   friend class OSDMonitor;
 
  public:
-  OSDMap() : epoch(0), 
+  // zhou:
+  OSDMap() : epoch(0),
 	     pool_max(0),
 	     flags(0),
 	     num_osd(0), num_up_osd(0), num_in_osd(0),
@@ -1061,7 +1063,7 @@ public:
     ceph_assert(osd < max_osd);
     return osd_xinfo[osd];
   }
-  
+
   int get_next_up_osd_after(int n) const {
     if (get_max_osd() == 0)
       return -1;
@@ -1463,7 +1465,7 @@ public:
     const std::vector<int> &oldacting,
     int newprimary,
     const std::vector<int> &newacting);
-  
+
   /* rank is -1 (stray), 0 (primary), 1,2,3,... (replica) */
   int get_pg_acting_role(spg_t pg, int osd) const {
     std::vector<int> group;
@@ -1577,7 +1579,7 @@ private: // Bunch of internal functions used only by calc_pg_upmaps (result of c
     OSDMap& tmp_osd_map,
     OSDMap::Incremental *pending_inc
   );
-  
+
   std::default_random_engine get_random_engine(
     CephContext *cct,
     std::random_device::result_type *p_seed
@@ -1608,7 +1610,7 @@ bool try_drop_remap_underfull(
   void add_remap_pair(
     CephContext *cct,
     int orig,
-    int out, 
+    int out,
     pg_t pg,
     size_t pg_pool_size,
     int osd,
@@ -1665,7 +1667,7 @@ public:
   //
   // This function calculates scores about the cluster read balance state
   // p_rb_info->acting_adj_score is the current read balance score (acting)
-  // p_rb_info->adjusted_score is the stable read balance score 
+  // p_rb_info->adjusted_score is the stable read balance score
   // Return value of 0 is OK, negative means an error (may happen with
   // some arifically generated osamap files)
   //
@@ -1739,10 +1741,10 @@ public:
   /**
    * Build an OSD map suitable for basic usage. If **num_osd** is >= 0
    * it will be initialized with the specified number of OSDs in a
-   * single host. If **num_osd** is < 0 the layout of the OSD map will 
+   * single host. If **num_osd** is < 0 the layout of the OSD map will
    * be built by reading the content of the configuration file.
    *
-   * @param cct [in] in core ceph context 
+   * @param cct [in] in core ceph context
    * @param e [in] initial epoch
    * @param fsid [in] id of the cluster
    * @param num_osd [in] number of OSDs if >= 0 or read from conf if < 0
@@ -1831,7 +1833,7 @@ public:
   float pool_raw_used_rate(int64_t poolid) const;
   std::optional<std::string> pending_require_osd_release() const;
 
-};
+}; // zhou: class OSDMap
 WRITE_CLASS_ENCODER_FEATURES(OSDMap)
 WRITE_CLASS_ENCODER_FEATURES(OSDMap::Incremental)
 

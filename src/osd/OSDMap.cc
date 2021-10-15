@@ -222,7 +222,7 @@ int OSDMap::Incremental::get_net_marked_out(const OSDMap *previous) const
 int OSDMap::Incremental::get_net_marked_down(const OSDMap *previous) const
 {
   int n = 0;
-  for (auto &state : new_state) { // 
+  for (auto &state : new_state) { //
     if (state.second & CEPH_OSD_UP) {
       if (previous->is_up(state.first))
 	n++;  // marked down
@@ -1167,7 +1167,7 @@ void OSDMap::Incremental::dump(Formatter *f) const
     for (const auto &osd : pg_temp.second)
       f->dump_int("osd", osd);
     f->close_section();
-    f->close_section();    
+    f->close_section();
   }
   f->close_section();
 
@@ -1424,7 +1424,7 @@ void OSDMap::range_bits::parse(const entity_addr_t& addr) {
     int32_t lower_shift = std::min(128-
 				   static_cast<int32_t>(addr.get_nonce()), 64);
     int32_t upper_shift = std::max(64- //(128-b.first.get_nonce())-64
-				   static_cast<int32_t>(addr.get_nonce()), 0); 
+				   static_cast<int32_t>(addr.get_nonce()), 0);
 
     auto get_mask = [](int32_t shift) -> uint64_t {
       if (shift >= 0 && shift < 64) {
@@ -2037,7 +2037,7 @@ void OSDMap::clean_temps(CephContext *cct,
 	pending_inc->new_pg_temp.erase(pg.first);
     }
   }
-  
+
   for (auto &pg : *nextmap.primary_temp) {
     // primary down?
     if (nextmap.is_down(pg.second)) {
@@ -2259,7 +2259,7 @@ bool OSDMap::clean_pg_upmaps(
   get_upmap_pgs(&to_check);
   auto any_change = check_pg_upmaps(cct, to_check, &to_cancel, &to_remap);
   clean_pg_upmaps(cct, pending_inc, to_cancel, to_remap);
-  //TODO: Create these 3 functions for pg_upmap_primaries and so they can be checked 
+  //TODO: Create these 3 functions for pg_upmap_primaries and so they can be checked
   //      and cleaned in the same way as pg_upmap. This is not critical since invalid
   //      pg_upmap_primaries are never applied, (the final check is in _apply_upmap).
   return any_change;
@@ -2272,7 +2272,7 @@ int OSDMap::apply_incremental(const Incremental &inc)
     fsid = inc.fsid;
   else if (inc.fsid != fsid)
     return -EINVAL;
-  
+
   ceph_assert(inc.epoch == epoch+1);
 
   epoch++;
@@ -2349,7 +2349,7 @@ int OSDMap::apply_incremental(const Incremental &inc)
     }
     name_pool[pname.second] = pname.first;
   }
-  
+
   for (const auto &pool : inc.old_pools) {
     pools.erase(pool);
     name_pool.erase(pool_name[pool]);
@@ -2374,11 +2374,11 @@ int OSDMap::apply_incremental(const Incremental &inc)
   // erasure_code_profiles
   for (const auto &profile : inc.old_erasure_code_profiles)
     erasure_code_profiles.erase(profile);
-  
+
   for (const auto &profile : inc.new_erasure_code_profiles) {
     set_erasure_code_profile(profile.first, profile.second);
   }
-  
+
   // up/down
   for (const auto &state : inc.new_state) {
     const auto osd = state.first;
@@ -2425,12 +2425,12 @@ int OSDMap::apply_incremental(const Incremental &inc)
   // info
   for (const auto &thru : inc.new_up_thru)
     osd_info[thru.first].up_thru = thru.second;
-  
+
   for (const auto &interval : inc.new_last_clean_interval) {
     osd_info[interval.first].last_clean_begin = interval.second.first;
     osd_info[interval.first].last_clean_end = interval.second.second;
   }
-  
+
   for (const auto &lost : inc.new_lost)
     osd_info[lost.first].lost_at = lost.second;
 
@@ -2667,6 +2667,8 @@ void OSDMap::_remove_nonexistent_osds(const pg_pool_t& pool,
   }
 }
 
+// zhou: README,
+
 void OSDMap::_pg_to_raw_osds(
   const pg_pool_t& pool, pg_t pg,
   vector<int> *osds,
@@ -2744,7 +2746,7 @@ void OSDMap::_apply_upmap(const pg_pool_t& pi, pg_t raw_pg, vector<int> *raw) co
   }
   auto r = pg_upmap_primaries.find(pg);
   if (r != pg_upmap_primaries.end()) {
-    auto new_prim = r->second;	
+    auto new_prim = r->second;
     // Apply mapping only if new primary is not marked out and valid osd id
     if (new_prim != CRUSH_ITEM_NONE && new_prim < max_osd && new_prim >= 0 &&
 	osd_weight[new_prim] != 0) {
@@ -2957,7 +2959,7 @@ void OSDMap::_pg_to_up_acting_osds(
         _acting_primary = _up_primary;
       }
     }
-  
+
     if (up)
       up->swap(_up);
     if (up_primary)
@@ -2977,7 +2979,7 @@ int OSDMap::calc_pg_role_broken(int osd, const vector<int>& acting, int nrep)
   // https://tracker.ceph.com/issues/43213
   if (!nrep)
     nrep = acting.size();
-  for (int i=0; i<nrep; i++) 
+  for (int i=0; i<nrep; i++)
     if (acting[i] == osd)
       return i;
   return -1;
@@ -3644,7 +3646,7 @@ void OSDMap::decode(ceph::buffer::list::const_iterator& bl)
     decode(*osd_uuid, bl);
     decode(osd_xinfo, bl);
     decode(osd_addrs->hb_front_addrs, bl);
-    // 
+    //
     if (struct_v >= 2) {
       decode(nearfull_ratio, bl);
       decode(full_ratio, bl);
@@ -5115,7 +5117,7 @@ int OSDMap::balance_primaries(
       // fill in the up, up primary, acting, and acting primary for the current PG
       tmp_osd_map.pg_to_up_acting_osds(pg, &up_osds, &up_primary,
 	  &acting_osds, &acting_primary);
-      
+
       // find the OSD that would make the best swap based on its score
       // We start by first testing the OSD that is currently primary for the PG we are checking.
       uint64_t curr_best_osd = up_primary;
@@ -5256,7 +5258,7 @@ int OSDMap::calc_desired_primary_distribution_simple(
     ldout(cct, 20) << __func__ << " calculating simple distribution for replicated pool "
                    << get_pool_name(pid) << dendl;
     uint64_t replica_count = pool->get_size();
-    
+
     map<uint64_t,set<pg_t>> pgs_by_osd;
     pgs_by_osd = get_pgs_by_osd(cct, pid);
 
@@ -5540,7 +5542,7 @@ int OSDMap::calc_pg_upmaps(
     return 0;
   }
 
-  osd_weight_total = build_pool_pgs_info(cct, only_pools, tmp_osd_map, 
+  osd_weight_total = build_pool_pgs_info(cct, only_pools, tmp_osd_map,
                                          total_pgs, pgs_by_osd, osd_weight);
   if (osd_weight_total == 0) {
     lderr(cct) << __func__ << " abort due to osd_weight_total == 0" << dendl;
@@ -5571,7 +5573,7 @@ int OSDMap::calc_pg_upmaps(
     cct->_conf.get_val<bool>("osd_calc_pg_upmaps_aggressively_fast");
   auto local_fallback_retries =
     cct->_conf.get_val<uint64_t>("osd_calc_pg_upmaps_local_fallback_retries");
-    
+
   while (max--) {
     ldout(cct, 30) << "Top of loop #" << max+1 << dendl;
     // build overfull and underfull
@@ -5580,7 +5582,7 @@ int OSDMap::calc_pg_upmaps(
     bool using_more_overfull = false;
     vector<int> underfull;
     vector<int> more_underfull;
-    fill_overfull_underfull(cct, deviation_osd, max_deviation, 
+    fill_overfull_underfull(cct, deviation_osd, max_deviation,
     			    overfull, more_overfull,
 			    underfull, more_underfull);
 
@@ -5619,7 +5621,7 @@ int OSDMap::calc_pg_upmaps(
       int osd = p->second;
       float deviation = p->first;
       if (fast_aggressive && osd_to_skip.count(osd)) {
-	ldout(cct, 20) << " Fast aggressive mode: skipping osd " << osd 
+	ldout(cct, 20) << " Fast aggressive mode: skipping osd " << osd
 	               << " osd_to_skip size = " << osd_to_skip.size() << dendl;
 	continue;
       }
@@ -5715,7 +5717,7 @@ int OSDMap::calc_pg_upmaps(
           // This way we can make sure that each tiny change will
           // definitely make distribution of PGs converging to
           // the perfect status.
-	  add_remap_pair(cct, orig[pos], out[pos], pg, (size_t)pg_pool_size, 
+	  add_remap_pair(cct, orig[pos], out[pos], pg, (size_t)pg_pool_size,
 	  		 osd, existing, temp_pgs_by_osd,
 			 new_upmap_items, to_upmap);
           goto test_change;
@@ -5921,7 +5923,7 @@ float OSDMap::build_pool_pgs_info (
 {
   //
   // This function builds some data structures that are used by calc_pg_upmaps.
-  // Specifically it builds pgs_by_osd and osd_weight maps, updates total_pgs 
+  // Specifically it builds pgs_by_osd and osd_weight maps, updates total_pgs
   // and returns the osd_weight_total
   //
   float osds_weight_total = 0.0;
@@ -5966,10 +5968,10 @@ float OSDMap::calc_deviations (
   float& stddev)  // return current max deviation
 {
   //
-  // This function calculates the 2 maps osd_deviation and deviation_osd which 
-  // hold the deviation between the current number of PGs which map to an OSD 
+  // This function calculates the 2 maps osd_deviation and deviation_osd which
+  // hold the deviation between the current number of PGs which map to an OSD
   // and the optimal number. Ot also calculates the stddev of the deviations and
-  // returns the current max deviation. 
+  // returns the current max deviation.
   // NOTE - the calculation is not exactly stddev it is actually sttdev^2 but as
   //        long as it is monotonic with stddev (and it is), it is sufficient for
   //        the balancer code.
@@ -6004,7 +6006,7 @@ void OSDMap::fill_overfull_underfull (
   std::vector<int>& underfull,
   std::vector<int>& more_underfull)
 {
-  // 
+  //
   // This function just fills the overfull and underfull data structures for the
   // use of calc_pg_upmaps
   //
@@ -6042,7 +6044,7 @@ int OSDMap::pack_upmap_results(
   const std::set<pg_t>& to_unmap,
   const std::map<pg_t, mempool::osdmap::vector<std::pair<int, int>>>& to_upmap,
   OSDMap& tmp_osd_map,
-  OSDMap::Incremental *pending_inc) 
+  OSDMap::Incremental *pending_inc)
 {
   //
   // This function takes the input from the local variables to_unmap and to_upmap
@@ -6066,7 +6068,7 @@ int OSDMap::pack_upmap_results(
     ++num_changed;
   }
 
-  return num_changed; 
+  return num_changed;
 }
 
 std::default_random_engine OSDMap::get_random_engine(
@@ -6076,9 +6078,9 @@ std::default_random_engine OSDMap::get_random_engine(
   //
   // This function creates a random_engine to be used for shuffling.
   // When p_seed == nullptr it generates random engine with a seed from /dev/random
-  // when p_seed is not null, it uses (*p_seed + seed_set) as the seed and 
-  // increments seed_set. This is used in order to craete regression test without 
-  // random effect on the results. 
+  // when p_seed is not null, it uses (*p_seed + seed_set) as the seed and
+  // increments seed_set. This is used in order to craete regression test without
+  // random effect on the results.
   //
   static std::random_device::result_type seed_set = 0;
   std::random_device::result_type seed;
@@ -6088,7 +6090,7 @@ std::default_random_engine OSDMap::get_random_engine(
   }
   else {
     seed = *p_seed + seed_set;
-    ldout(cct, 30) << " Starting random engine with seed " 
+    ldout(cct, 30) << " Starting random engine with seed "
 		   << seed << dendl;
     seed_set++;
   }
@@ -6105,9 +6107,9 @@ bool OSDMap::try_drop_remap_overfull(
   map<pg_t, mempool::osdmap::vector<pair<int32_t,int32_t>>>& to_upmap)
 {
   //
-  // This function tries to drop existimg upmap items which map data to overfull 
-  // OSDs. It updates temp_pgs_by_osd, to_unmap and to_upmap and rerturns true 
-  // if it found an item that can be dropped, false if not. 
+  // This function tries to drop existimg upmap items which map data to overfull
+  // OSDs. It updates temp_pgs_by_osd, to_unmap and to_upmap and rerturns true
+  // if it found an item that can be dropped, false if not.
   //
   for (auto pg : pgs) {
     auto p = tmp_osd_map.pg_upmap_items.find(pg);
@@ -6161,10 +6163,10 @@ bool OSDMap::try_drop_remap_underfull(
     set<pg_t>& to_unmap,
     map<pg_t, mempool::osdmap::vector<std::pair<int32_t,int32_t>>>& to_upmap)
 {
-  // 
+  //
   // This function tries to drop existimg upmap items which map data from underfull
-  // OSDs. It updates temp_pgs_by_osd, to_unmap and to_upmap and rerturns true 
-  // if it found an item that can be dropped, false if not. 
+  // OSDs. It updates temp_pgs_by_osd, to_unmap and to_upmap and rerturns true
+  // if it found an item that can be dropped, false if not.
   //
   for (auto& [pg, um_pairs] : candidates) {
     mempool::osdmap::vector<pair<int32_t,int32_t>> new_upmap_items;
@@ -6211,17 +6213,17 @@ bool OSDMap::try_drop_remap_underfull(
 void OSDMap::add_remap_pair(
   CephContext *cct,
   int orig,
-  int out, 
+  int out,
   pg_t pg,
   size_t pg_pool_size,
   int osd,
   set<int>& existing,
   map<int,set<pg_t>>& temp_pgs_by_osd,
   mempool::osdmap::vector<pair<int32_t,int32_t>> new_upmap_items,
-  map<pg_t, mempool::osdmap::vector<pair<int32_t,int32_t>>>& to_upmap) 
+  map<pg_t, mempool::osdmap::vector<pair<int32_t,int32_t>>>& to_upmap)
 {
   //
-  // add a single remap pair (in pg <pg> remap osd from <orig> to <out>) to all 
+  // add a single remap pair (in pg <pg> remap osd from <orig> to <out>) to all
   // the relevant data structures
   //
   ldout(cct, 10) << " will try adding new remapping pair "
@@ -6247,11 +6249,11 @@ int OSDMap::find_best_remap (
   const vector<int>& orig,
   const vector<int>& out,
   const set<int>& existing,
-  const map<int,float> osd_deviation) 
+  const map<int,float> osd_deviation)
 {
   //
-  // Find the best remap from the suggestions in orig and out - the best remap 
-  // is the one which maps from the OSD with the largest deviatoion (from the 
+  // Find the best remap from the suggestions in orig and out - the best remap
+  // is the one which maps from the OSD with the largest deviatoion (from the
   // OSDs which are part of orig)
   //
   int best_pos = -1;
@@ -6897,7 +6899,7 @@ protected:
     *kb_used_omap = p->statfs.kb_used_omap();
     *kb_used_meta = p->statfs.kb_used_internal_metadata();
     *kb_avail = p->statfs.kb_avail();
-    
+
     return true;
   }
 

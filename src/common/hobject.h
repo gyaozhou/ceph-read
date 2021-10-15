@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #ifndef __CEPH_OS_HOBJECT_H
@@ -40,6 +40,7 @@ namespace ceph {
 #define INT64_MIN ((int64_t)0x8000000000000000ll)
 #endif
 
+// zhou: object_t with hash? pg id?
 struct hobject_t {
 public:
   static const int64_t POOL_META = -1;
@@ -85,11 +86,11 @@ public:
   }
 
   std::string to_str() const;
-  
-  uint32_t get_hash() const { 
+
+  uint32_t get_hash() const {
     return hash;
   }
-  void set_hash(uint32_t value) { 
+  void set_hash(uint32_t value) {
     hash = value;
     build_hash_cache();
   }
@@ -285,7 +286,7 @@ public:
   void set_bitwise_key_u32(uint32_t value) {
     hash = _reverse_bits(value);
     // below is identical to build_hash_cache() and shall be
-    // updated correspondingly if you change build_hash_cache() 
+    // updated correspondingly if you change build_hash_cache()
     nibblewise_key_cache = _reverse_nibbles(hash);
     hash_reverse_bits = value;
   }
@@ -467,6 +468,7 @@ static inline int cmp(const T&, const hobject_t&r) {
 
 typedef version_t gen_t;
 
+// zhou: used in EC mode.
 struct ghobject_t {
   static const gen_t NO_GEN = UINT64_MAX;
 

@@ -30,9 +30,13 @@
 
 class RadosClient;
 
+// zhou: context for a pool.
 struct librados::IoCtxImpl {
   std::atomic<uint64_t> ref_cnt = { 0 };
+
+  // zhou:
   RadosClient *client = nullptr;
+
   int64_t poolid = 0;
   snapid_t snap_seq;
   ::SnapContext snapc;

@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 /*
  * Ceph - scalable distributed file system
@@ -7,9 +7,9 @@
  *
  * This is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
- * License version 2.1, as published by the Free Software 
+ * License version 2.1, as published by the Free Software
  * Foundation.  See file COPYING.
- * 
+ *
  */
 
 #include <sys/types.h>
@@ -78,6 +78,7 @@ TracepointProvider::Traits cyg_profile_traits("libcyg_profile_tp.so",
 
 } // anonymous namespace
 
+// zhou: OSD is main class
 OSD *osdptr = nullptr;
 
 void handle_osd_signal(int signum)
@@ -117,6 +118,7 @@ static void usage()
   generic_server_usage();
 }
 
+// zhou: OSD process entry
 int main(int argc, const char **argv)
 {
   auto args = argv_to_vec(argc, argv);
@@ -128,6 +130,9 @@ int main(int argc, const char **argv)
     usage();
     exit(0);
   }
+
+
+  // zhou: first initialization, get CephContext.
 
   auto cct = global_init(
     nullptr,
@@ -160,10 +165,12 @@ int main(int argc, const char **argv)
     if (ceph_argparse_double_dash(args, i)) {
       break;
     } else if (ceph_argparse_flag(args, i, "--mkfs", (char*)NULL)) {
+      // zhou: Create an empty object repository. Normally invoked by mkcephfs(8). This also initializes the journal (if one is defined).
       mkfs = true;
     } else if (ceph_argparse_witharg(args, i, &val, "--osdspec-affinity", (char*)NULL)) {
      osdspec_affinity = val;
     } else if (ceph_argparse_flag(args, i, "--mkjournal", (char*)NULL)) {
+      // zhou: Create a new journal file to match an existing object repository. This is useful if the journal device or file is wiped out due to a disk or file system failure.
       mkjournal = true;
     } else if (ceph_argparse_flag(args, i, "--check-allows-journal", (char*)NULL)) {
       check_allows_journal = true;
@@ -174,6 +181,7 @@ int main(int argc, const char **argv)
     } else if (ceph_argparse_flag(args, i, "--mkkey", (char*)NULL)) {
       mkkey = true;
     } else if (ceph_argparse_flag(args, i, "--flush-journal", (char*)NULL)) {
+      // zhou: Flush the journal to permanent store. This runs in the foreground so you know when it's completed. This can be useful if you want to resize the journal or need to otherwise destroy it: this guarantees you won't lose data.
       flushjournal = true;
     } else if (ceph_argparse_flag(args, i, "--convert-filestore", (char*)NULL)) {
       convertfilestore = true;
@@ -276,6 +284,7 @@ int main(int argc, const char **argv)
     forker.exit(1);
   }
 
+  // zhou: object store type, filestore/bluestore/...
   // the store
   std::string store_type;
   {
@@ -291,6 +300,8 @@ int main(int argc, const char **argv)
       }
       ::close(fd);
     } else if (mkfs) {
+      // zhou: when create new object store, need to determine which type of
+      //       object store will be used.
       store_type = g_conf().get_val<std::string>("osd_objectstore");
     } else {
       // hrm, infer the type
@@ -316,8 +327,10 @@ int main(int argc, const char **argv)
     }
   }
 
+  // zhou: where to store journal used by filestore.
   std::string journal_path = g_conf().get_val<std::string>("osd_journal");
   uint32_t flags = g_conf().get_val<uint64_t>("osd_os_flags");
+  // zhou: ObjectStore will be managed by class OSD finally.
   std::unique_ptr<ObjectStore> store = ObjectStore::create(g_ceph_context,
 							   store_type,
 							   data_path,
@@ -363,7 +376,7 @@ int main(int argc, const char **argv)
       derr << "must specify cluster fsid" << dendl;
       forker.exit(-EINVAL);
     }
-
+    // zhou: OSD::mkfs() is serial operations performed on "store".
     int err = OSD::mkfs(g_ceph_context, std::move(store), g_conf().get_val<uuid_d>("fsid"),
                         whoami, osdspec_affinity);
     if (err < 0) {
@@ -379,6 +392,7 @@ int main(int argc, const char **argv)
   if (mkfs || mkkey) {
     forker.exit(0);
   }
+
   if (mkjournal) {
     common_init_finish(g_ceph_context);
     int err = store->mkjournal();
@@ -392,6 +406,7 @@ int main(int argc, const char **argv)
 	 << " for object store " << data_path << dendl;
     forker.exit(0);
   }
+
   if (check_wants_journal) {
     if (store->wants_journal()) {
       cout << "wants journal: yes" << std::endl;
@@ -419,6 +434,7 @@ int main(int argc, const char **argv)
       forker.exit(1);
     }
   }
+
   if (flushjournal) {
     common_init_finish(g_ceph_context);
     int err = store->mount();
@@ -436,6 +452,7 @@ flushjournal_out:
     store.reset();
     forker.exit(err < 0 ? 1 : 0);
   }
+
   if (dump_journal) {
     common_init_finish(g_ceph_context);
     int err = store->dump_journal(cout);
@@ -467,7 +484,8 @@ flushjournal_out:
     }
     forker.exit(0);
   }
-  
+
+
   {
     int r = extblkdev::preload(g_ceph_context);
     if (r < 0) {
@@ -480,6 +498,7 @@ flushjournal_out:
   uuid_d cluster_fsid, osd_fsid;
   ceph_release_t require_osd_release = ceph_release_t::unknown;
   int w;
+  // zhou: read metadata from "store"
   int r = OSD::peek_meta(store.get(), &magic, &cluster_fsid, &osd_fsid, &w,
 			 &require_osd_release);
   if (r < 0) {
@@ -510,7 +529,7 @@ flushjournal_out:
     cout << osd_fsid << std::endl;
     forker.exit(0);
   }
-
+////////////////////////////////////////////////////////////////////////////////
   {
     ostringstream err;
     if (!can_upgrade_from(require_osd_release, "require_osd_release", err)) {
@@ -518,6 +537,7 @@ flushjournal_out:
       forker.exit(1);
     }
   }
+////////////////////////////////////////////////////////////////////////////////
 
   // consider objectstore numa node
   int os_numa_node = -1;
@@ -530,16 +550,25 @@ flushjournal_out:
     iface_preferred_numa_node = os_numa_node;
   }
 
+////////////////////////////////////////////////////////////////////////////////
   // messengers
+  // zhou: default value is "async+posix"
   std::string msg_type = g_conf().get_val<std::string>("ms_type");
+
   std::string public_msg_type =
     g_conf().get_val<std::string>("ms_public_type");
   std::string cluster_msg_type =
     g_conf().get_val<std::string>("ms_cluster_type");
 
+  // zhou: once not setted, use "async+posix".
   public_msg_type = public_msg_type.empty() ? msg_type : public_msg_type;
   cluster_msg_type = cluster_msg_type.empty() ? msg_type : cluster_msg_type;
+
   uint64_t nonce = Messenger::get_random_nonce();
+
+  // zhou: used to communicate with clients, according to "public_msg_type",
+  //       AsyncMessenger object returned.
+
   Messenger *ms_public = Messenger::create(g_ceph_context, public_msg_type,
 					   entity_name_t::OSD(whoami), "client", nonce);
   Messenger *ms_cluster = Messenger::create(g_ceph_context, cluster_msg_type,
@@ -556,6 +585,7 @@ flushjournal_out:
 					     entity_name_t::OSD(whoami), "ms_objecter", nonce);
   if (!ms_public || !ms_cluster || !ms_hb_front_client || !ms_hb_back_client || !ms_hb_back_server || !ms_hb_front_server || !ms_objecter)
     forker.exit(1);
+
   ms_cluster->set_cluster_protocol(CEPH_OSD_PROTOCOL);
   ms_hb_front_client->set_cluster_protocol(CEPH_OSD_PROTOCOL);
   ms_hb_back_client->set_cluster_protocol(CEPH_OSD_PROTOCOL);
@@ -581,6 +611,7 @@ flushjournal_out:
     CEPH_FEATURE_UID |
     CEPH_FEATURE_PGID64 |
     CEPH_FEATURE_OSDENC;
+
 
   ms_public->set_default_policy(Messenger::Policy::stateless_registered_server(0));
   ms_public->set_policy_throttlers(entity_name_t::TYPE_CLIENT,
@@ -671,6 +702,8 @@ flushjournal_out:
   if (ms_hb_back_client->client_bind(hb_back_addrs.front()) < 0)
     forker.exit(1);
 
+////////////////////////////////////////////////////////////////////////////////
+
   // install signal handlers
   init_async_signal_handler();
   register_async_signal_handler(SIGHUP, sighup_handler);
@@ -696,6 +729,9 @@ flushjournal_out:
     forker.exit(1);
   }
 
+////////////////////////////////////////////////////////////////////////////////
+
+  // zhou: class OSD used for communicate with OSDC and handle it in os/object store.
   osdptr = new OSD(g_ceph_context,
 		   std::move(store),
 		   whoami,
@@ -711,6 +747,7 @@ flushjournal_out:
 		   journal_path,
 		   poolctx);
 
+  // zhou:
   int err = osdptr->pre_init();
   if (err < 0) {
     derr << TEXT_RED << " ** ERROR: osd pre_init failed: " << cpp_strerror(-err)
@@ -718,6 +755,7 @@ flushjournal_out:
     forker.exit(1);
   }
 
+  // zhou: network start
   ms_public->start();
   ms_hb_front_client->start();
   ms_hb_back_client->start();
@@ -726,6 +764,7 @@ flushjournal_out:
   ms_cluster->start();
   ms_objecter->start();
 
+  // zhou:
   // start osd
   err = osdptr->init();
   if (err < 0) {
@@ -745,11 +784,13 @@ flushjournal_out:
   register_async_signal_handler_oneshot(SIGINT, handle_osd_signal);
   register_async_signal_handler_oneshot(SIGTERM, handle_osd_signal);
 
+  // zhou:
   osdptr->final_init();
 
   if (g_conf().get_val<bool>("inject_early_sigterm"))
     kill(getpid(), SIGTERM);
 
+  // zhou: wait for Messenger resource released???
   ms_public->wait();
   ms_hb_front_client->wait();
   ms_hb_back_client->wait();

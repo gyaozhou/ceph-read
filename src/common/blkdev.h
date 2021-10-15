@@ -36,6 +36,9 @@ extern int block_device_get_metrics(const std::string& devname, int timeout,
 extern void get_raw_devices(const std::string& in,
 			    std::set<std::string> *ls);
 
+
+// zhou: get block device property from OS
+
 class BlkDev {
 public:
   BlkDev(int fd);

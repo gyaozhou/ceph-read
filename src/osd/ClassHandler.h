@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 #ifndef CEPH_CLASSHANDLER_H
 #define CEPH_CLASSHANDLER_H
@@ -10,6 +10,7 @@
 #include "common/ceph_mutex.h"
 #include "objclass/objclass.h"
 
+// zhou:
 //forward declaration
 class ClassHandler
 {
@@ -47,7 +48,7 @@ public:
   };
 
   struct ClassData {
-    enum Status { 
+    enum Status {
       CLASS_UNKNOWN,
       CLASS_MISSING,         // missing
       CLASS_MISSING_DEPS,    // missing dependencies
@@ -95,7 +96,7 @@ public:
         return &(i->second);
       }
     }
-  };
+  }; // zhou: struct ClassData {}
 
 private:
   std::map<std::string, ClassData> classes;
@@ -120,7 +121,7 @@ public:
   void shutdown();
 
   static ClassHandler& get_instance();
-};
+}; // zhou: class ClassHandler
 
 
 #endif

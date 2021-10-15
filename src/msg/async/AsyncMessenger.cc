@@ -59,6 +59,7 @@ Processor::Processor(AsyncMessenger *r, Worker *w, CephContext *c)
   : msgr(r), net(c), worker(w),
     listen_handler(new C_processor_accept(this)) {}
 
+// zhou: README,
 int Processor::bind(const entity_addrvec_t &bind_addrs,
 		    const std::set<int>& avoid_ports,
 		    entity_addrvec_t* bound_addrs)
@@ -158,8 +159,8 @@ void Processor::start()
       for (auto& listen_socket : listen_sockets) {
 	if (listen_socket) {
           if (listen_socket.fd() == -1) {
-            ldout(msgr->cct, 1) << __func__ 
-                << " Error: processor restart after listen_socket.fd closed. " 
+            ldout(msgr->cct, 1) << __func__
+                << " Error: processor restart after listen_socket.fd closed. "
                 << this << dendl;
             return;
           }
@@ -246,12 +247,13 @@ void Processor::stop()
     }, false);
 }
 
-
+// zhou:
 struct StackSingleton {
   CephContext *cct;
   std::shared_ptr<NetworkStack> stack;
 
   explicit StackSingleton(CephContext *c): cct(c) {}
+  // zhou:
   void ready(std::string &type) {
     if (!stack)
       stack = NetworkStack::create(cct, type);
@@ -291,17 +293,27 @@ AsyncMessenger::AsyncMessenger(CephContext *cct, entity_name_t name,
 
   auto single = &cct->lookup_or_create_singleton_object<StackSingleton>(
     "AsyncMessenger::NetworkStack::" + transport_type, true, cct);
+
+  // zhou: "NetworkStack::create()", create object of PosixNetworkStack/DPDKStack/RDMAStack.
   single->ready(transport_type);
+  // zhou: get raw pointer from shared_ptr
   stack = single->stack.get();
+
+  // zhou: NetworkStack::start()
   stack->start();
+
+  // zhou: use to handle loopback connection
   local_worker = stack->get_worker();
   local_connection = ceph::make_ref<AsyncConnection>(cct, this, &dispatch_queue,
 					 local_worker, true, true);
   init_local_connection();
+
   reap_handler = new C_handle_reap(this);
+
   unsigned processor_num = 1;
   if (stack->support_local_listen_table())
     processor_num = stack->get_num_worker();
+
   for (unsigned i = 0; i < processor_num; ++i)
     processors.push_back(new Processor(this, stack->get_worker(i), cct));
 }
@@ -333,7 +345,10 @@ void AsyncMessenger::ready()
 
   std::lock_guard l{lock};
   for (auto &&p : processors)
+    // zhou: NetworkStack::start(), new thread created.
     p->start();
+
+  // zhou: README,
   dispatch_queue.start();
 }
 
@@ -396,6 +411,7 @@ int AsyncMessenger::bindv(const entity_addrvec_t &bind_addrs,
     saved_public_addrs = std::move(public_addrs);
   }
 
+  // zhou: always true in PosixNetworkStack and DPDKStack.
   if (!stack->is_ready()) {
     ldout(cct, 10) << __func__ << " Network Stack is not ready for bind yet - postponed" << dendl;
     pending_bind_addrs = bind_addrs;
@@ -411,6 +427,7 @@ int AsyncMessenger::bindv(const entity_addrvec_t &bind_addrs,
   entity_addrvec_t bound_addrs;
   unsigned i = 0;
   for (auto &&p : processors) {
+    // zhou: "Processor::bind()", due to DPDK make thinks complicated.
     int r = p->bind(bind_addrs, avoid_ports, &bound_addrs);
     if (r) {
       // Note: this is related to local tcp listen table problem.
@@ -551,6 +568,7 @@ int AsyncMessenger::client_reset()
   return 0;
 }
 
+// zhou:
 int AsyncMessenger::start()
 {
   std::scoped_lock l{lock};
@@ -602,6 +620,7 @@ void AsyncMessenger::wait()
   started = false;
 }
 
+// zhou: README,
 void AsyncMessenger::add_accept(Worker *w, ConnectedSocket cli_socket,
 				const entity_addr_t &listen_addr,
 				const entity_addr_t &peer_addr)
@@ -613,6 +632,7 @@ void AsyncMessenger::add_accept(Worker *w, ConnectedSocket cli_socket,
   accepting_conns.insert(conn);
 }
 
+// zhou: README,
 AsyncConnectionRef AsyncMessenger::create_connect(
   const entity_addrvec_t& addrs, int type, bool anon)
 {
@@ -688,6 +708,7 @@ entity_addrvec_t AsyncMessenger::_filter_addrs(const entity_addrvec_t& addrs)
   }
 }
 
+// zhou: README,
 int AsyncMessenger::send_to(Message *m, int type, const entity_addrvec_t& addrs)
 {
   FUNCTRACE(cct);
@@ -727,6 +748,7 @@ int AsyncMessenger::send_to(Message *m, int type, const entity_addrvec_t& addrs)
   return 0;
 }
 
+// zhou: README,
 ConnectionRef AsyncMessenger::connect_to(int type,
 					 const entity_addrvec_t& addrs,
 					 bool anon, bool not_local_dest)
@@ -921,7 +943,7 @@ bool AsyncMessenger::learned_addr(const entity_addr_t &peer_addr_for_me)
 	  if (!did_bind) {
 	    t.set_type(entity_addr_t::TYPE_ANY);
 	    t.set_port(0);
-	  } else {	  
+	  } else {
 	    t.set_type(a.get_type());
 	    t.set_port(a.get_port());
 	  }

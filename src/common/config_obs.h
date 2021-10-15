@@ -27,6 +27,7 @@ namespace ceph {
  * Subscribe for configuration changes by calling the md_config_t::add_observer() method
  * and unsubscribe using md_config_t::remove_observer().
  */
+// zhou: configuration changes observer.
 template<class ConfigProxy>
 class md_config_obs_impl {
 public:
@@ -45,6 +46,7 @@ public:
 };
 }
 
+// zhou: class ConfigProxy defined in src/common/config_proxy.h
 using md_config_obs_t = ceph::md_config_obs_impl<ConfigProxy>;
 
 #endif

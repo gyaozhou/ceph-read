@@ -34,7 +34,11 @@ class KernelDevice : public BlockDevice,
 protected:
   std::string path;
 private:
+  // zhou: differrent fd owns different write hint.
+  //       For example, WAL in BlueFS will always be overwriten.
+
   std::vector<int> fd_directs, fd_buffereds;
+
   bool enable_wrt = true;
   bool aio, dio;
 
@@ -48,7 +52,9 @@ private:
   std::atomic<bool> io_since_flush = {false};
   ceph::mutex flush_mutex = ceph::make_mutex("KernelDevice::flush_mutex");
 
+  // zhou:
   std::unique_ptr<io_queue_t> io_queue;
+
   aio_callback_t discard_callback;
   void *discard_callback_priv;
   bool aio_stop;
@@ -58,6 +64,7 @@ private:
   int discard_running = 0;
   interval_set<uint64_t> discard_queued;
 
+  // zhou: aio completion handler thread
   struct AioCompletionThread : public Thread {
     KernelDevice *bdev;
     explicit AioCompletionThread(KernelDevice *b) : bdev(b) {}
@@ -67,6 +74,7 @@ private:
     }
   } aio_thread;
 
+  // zhou: just add context "bdev"
   struct DiscardThread : public Thread {
     KernelDevice *bdev;
     const uint64_t id;
@@ -162,5 +170,6 @@ public:
   void handle_conf_change(const ConfigProxy& conf,
                           const std::set <std::string> &changed) override;
 };
+// zhou: class KernelDevice
 
 #endif

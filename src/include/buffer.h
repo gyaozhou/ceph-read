@@ -410,6 +410,7 @@ struct error_code;
    * list - the useful bit!
    */
 
+  // zhou: README,
   class CEPH_BUFFER_API list {
   public:
     // this the very low-level implementation of singly linked list
@@ -623,7 +624,7 @@ struct error_code;
 	_tail->next = &_root;
 	other._tail->next = &other._root;
       }
-    };
+    }; // zhou: class buffers_t
 
     class iterator;
 
@@ -816,7 +817,7 @@ struct error_code;
       size_t get_logical_offset() const {
 	return out_of_band_offset + (pos - space.bp_data);
       }
-    };
+    }; // zhou: class contiguous_appender
 
     contiguous_appender get_contiguous_appender(size_t len, bool deep=false) {
       return contiguous_appender(*this, len, deep);
@@ -1216,7 +1217,7 @@ struct error_code;
     static list static_from_mem(char* c, size_t l);
     static list static_from_cstring(char* c);
     static list static_from_string(std::string& s);
-  };
+  }; // zhou: class list
 
 } // inline namespace v15_2_0
 

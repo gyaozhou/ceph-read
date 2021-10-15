@@ -95,8 +95,15 @@ class MMonGetPurgedSnapsReply;
 
 class OSD;
 
+// zhou: README,
+//      "The OSDService acts as a broker between PG threads and OSD state which allows
+//       PGs to perform actions using OSD services such as workqueues and messengers.
+//       This is still a work in progress.  Future cleanups will focus on moving such
+//       state entirely from the OSD into the OSDService. "
+
 class OSDService : public Scrub::ScrubSchedListener {
   using OpSchedulerItem = ceph::osd::scheduler::OpSchedulerItem;
+
 public:
   OSD *osd;
   CephContext *cct;
@@ -891,7 +898,7 @@ public:
 
   explicit OSDService(OSD *osd, ceph::async::io_context_pool& poolctx);
   ~OSDService() = default;
-};
+}; // zhou: class OSDService
 
 /*
 
@@ -943,8 +950,10 @@ public:
 
   */
 
+// zhou: README,
 struct OSDShardPGSlot {
   using OpSchedulerItem = ceph::osd::scheduler::OpSchedulerItem;
+
   PGRef pg;                      ///< pg reference
   std::deque<OpSchedulerItem> to_process; ///< order items for this slot
   int num_running = 0;          ///< _process threads doing pg lookup/lock
@@ -966,8 +975,9 @@ struct OSDShardPGSlot {
 
   /// waiting for a merge (source or target) by this epoch
   epoch_t waiting_for_merge_epoch = 0;
-};
+}; // zhou: struct OSDShardPGSlot
 
+// zhou: README,
 struct OSDShard {
   const unsigned shard_id;
   CephContext *cct;
@@ -1058,7 +1068,12 @@ struct OSDShard {
     op_queue_type_t osd_op_queue,
     unsigned osd_op_queue_cut_off);
 };
+// zhou: struct OSDShard {}
 
+
+// zhou: README, class OSD used for communicate with OSDC and handle it in os/object store.
+//       Created in ceph_osd.c
+//       Derived from class Dispatcher, stands for capability to handle messages.
 class OSD : public Dispatcher,
 	    public md_config_obs_t {
   using OpSchedulerItem = ceph::osd::scheduler::OpSchedulerItem;
@@ -1117,6 +1132,7 @@ protected:
   PerfCounters* create_recoverystate_perf();
   void tick();
   void tick_without_osd_lock();
+
   void _dispatch(Message *m);
 
   void check_osdmap_features();
@@ -1423,7 +1439,7 @@ private:
 	con_front.reset(nullptr);
       }
     }
-  };
+  }; // zhou: struct HeartbeatInfo {}
 
   ceph::mutex heartbeat_lock = ceph::make_mutex("OSD::heartbeat_lock");
   std::map<int, int> debug_heartbeat_drops_remaining;
@@ -1480,6 +1496,8 @@ private:
 public:
   bool heartbeat_dispatch(Message *m);
 
+
+  // zhou: "heartbeat_dispatcher"
   struct HeartbeatDispatcher : public Dispatcher {
     OSD *osd;
     explicit HeartbeatDispatcher(OSD *o) : Dispatcher(o->cct), osd(o) {}
@@ -1494,12 +1512,15 @@ public:
 	return false;
       }
     }
+
     void ms_fast_dispatch(Message *m) override {
       osd->heartbeat_dispatch(m);
     }
+    // zhou: struct HeartbeatDispatcher {} member function
     bool ms_dispatch(Message *m) override {
       return osd->heartbeat_dispatch(m);
     }
+
     bool ms_handle_reset(Connection *con) override {
       return osd->heartbeat_reset(con);
     }
@@ -1510,7 +1531,7 @@ public:
     int ms_handle_fast_authentication(Connection *con) override {
       return true;
     }
-  } heartbeat_dispatcher;
+  } heartbeat_dispatcher; // zhou: struct HeartbeatDispatcher {}
 
 private:
   // -- op tracking --
@@ -1550,6 +1571,7 @@ protected:
   friend class ceph::osd::scheduler::PGRecoveryMsg;
   friend class ceph::osd::scheduler::PGDelete;
 
+  // zhou:
   class ShardedOpWQ
     : public ShardedThreadPool::ShardedWQ<OpSchedulerItem>
   {
@@ -1774,6 +1796,7 @@ public:
   std::set<int64_t> get_mapped_pools();
 
 protected:
+  // zhou: create a new class PG object.
   PG* _make_pg(OSDMapRef createmap, spg_t pgid);
 
   bool maybe_wait_for_max_pg(const OSDMapRef& osdmap,
@@ -1893,6 +1916,7 @@ protected:
 
 
 private:
+  // zhou: define fast dispatch to upper commponents capability.
   bool ms_can_fast_dispatch_any() const override { return true; }
   bool ms_can_fast_dispatch(const Message *m) const override {
     switch (m->get_type()) {
@@ -1940,8 +1964,11 @@ private:
       return false;
     }
   }
+  // zhou: handler registerec to handle fast message type defined above.
   void ms_fast_dispatch(Message *m) override;
+  // zhou: handler registered to handle other message type.
   bool ms_dispatch(Message *m) override;
+
   void ms_handle_connect(Connection *con) override;
   void ms_handle_fast_connect(Connection *con) override;
   void ms_handle_fast_accept(Connection *con) override;
@@ -1953,6 +1980,7 @@ private:
  public:
   /* internal and external can point to the same messenger, they will still
    * be cleaned up properly*/
+  // zhou: a bunch of Messengers used for communication.
   OSD(CephContext *cct_,
       std::unique_ptr<ObjectStore> store_,
       int id,
@@ -1965,6 +1993,7 @@ private:
       Messenger *osdc_messenger,
       MonClient *mc, const std::string &dev, const std::string &jdev,
       ceph::async::io_context_pool& poolctx);
+
   ~OSD() override;
 
   // static bits
@@ -2047,6 +2076,7 @@ public:
   static bool op_is_discardable(const MOSDOp *m);
 
 public:
+  // zhou:
   OSDService service;
   friend class OSDService;
 
@@ -2060,7 +2090,7 @@ private:
   ceph::mutex m_perf_queries_lock = ceph::make_mutex("OSD::m_perf_queries_lock");
   std::list<OSDPerfMetricQuery> m_perf_queries;
   std::map<OSDPerfMetricQuery, OSDPerfMetricLimits> m_perf_limits;
-};
+};  // zhou: class OSD
 
 
 //compatibility of the executable

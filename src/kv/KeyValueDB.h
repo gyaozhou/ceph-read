@@ -20,8 +20,10 @@
  *
  * Kyoto Cabinet should implement this
  */
+// zhou: abstract class for KV store
 class KeyValueDB {
 public:
+
   class TransactionImpl {
   public:
     /// Set Keys
@@ -104,8 +106,8 @@ public:
     }
 
     /// Remove Single Key which exists and was not overwritten.
-    /// This API is only related to performance optimization, and should only be 
-    /// re-implemented by log-insert-merge tree based keyvalue stores(such as RocksDB). 
+    /// This API is only related to performance optimization, and should only be
+    /// re-implemented by log-insert-merge tree based keyvalue stores(such as RocksDB).
     /// If a key is overwritten (by calling set multiple times), then the result
     /// of calling rm_single_key on this key is undefined.
     virtual void rm_single_key(
@@ -132,7 +134,7 @@ public:
     ) { ceph_abort_msg("Not implemented"); }
 
     virtual ~TransactionImpl() {}
-  };
+  }; // zhou: class TransactionImpl
   typedef std::shared_ptr< TransactionImpl > Transaction;
 
   /// create a new instance
@@ -450,6 +452,6 @@ protected:
   std::vector<std::pair<std::string,
 			std::shared_ptr<MergeOperator> > > merge_ops;
 
-};
+}; // zhou: class KeyValueDB
 
 #endif

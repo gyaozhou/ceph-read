@@ -1,7 +1,7 @@
 // -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 #include <chrono>
-#include "boost/algorithm/string.hpp" 
+#include "boost/algorithm/string.hpp"
 #include "bluestore_common.h"
 #include "BlueFS.h"
 
@@ -479,6 +479,7 @@ void BlueFS::_update_logger_stats()
   }
 }
 
+// zhou: README,
 int BlueFS::add_block_device(unsigned id, const string& path, bool trim,
                              bluefs_shared_alloc_context_t* _shared_alloc)
 {
@@ -1297,7 +1298,7 @@ int BlueFS::_replay(bool noop, bool to_stdout)
   dout(10) << __func__ << " log_fnode " << super.log_fnode << dendl;
   if (unlikely(to_stdout)) {
     std::cout << " log_fnode " << super.log_fnode << std::endl;
-  } 
+  }
 
   FileReader *log_reader = new FileReader(
     log_file, cct->_conf->bluefs_max_prefetch,
@@ -1326,7 +1327,7 @@ int BlueFS::_replay(bool noop, bool to_stdout)
       }
     }
   }
-  
+
   while (true) {
     ceph_assert((log_reader->buf.pos & ~super.block_mask()) == 0);
     uint64_t pos = log_reader->buf.pos;
@@ -1577,13 +1578,13 @@ int BlueFS::_replay(bool noop, bool to_stdout)
                       << ":  op_dir_unlink " << " " << dirname << "/" << filename
                       << std::endl;
           }
- 
+
 	  if (!noop) {
 	    map<string,DirRef>::iterator q = nodes.dir_map.find(dirname);
 	    ceph_assert(q != nodes.dir_map.end());
 	    map<string,FileRef>::iterator r = q->second->file_map.find(filename);
 	    ceph_assert(r != q->second->file_map.end());
-            ceph_assert(r->second->refs > 0); 
+            ceph_assert(r->second->refs > 0);
 	    --r->second->refs;
 	    q->second->file_map.erase(r);
 	  }
@@ -2361,7 +2362,7 @@ int64_t BlueFS::_read(
       u_lock.unlock();
       s_lock.lock();
       // we should recheck if buffer is valid after lock downgrade
-      continue; 
+      continue;
     }
     left = buf->get_buf_remaining(off);
     dout(20) << __func__ << " left 0x" << std::hex << left
@@ -3171,8 +3172,8 @@ void BlueFS::_consume_dirty(uint64_t seq)
 
 int64_t BlueFS::_maybe_extend_log() {
   uint64_t runway = log.writer->file->fnode.get_allocated() - log.writer->get_effective_write_pos();
-  // increasing the size of the log involves adding a OP_FILE_UPDATE_INC which its size will 
-  // increase with respect the number of extents. bluefs_min_log_runway should cover the max size 
+  // increasing the size of the log involves adding a OP_FILE_UPDATE_INC which its size will
+  // increase with respect the number of extents. bluefs_min_log_runway should cover the max size
   // a log can get.
   // inject new allocation in case log is too big
   size_t expected_log_size = 0;
@@ -3247,7 +3248,7 @@ void BlueFS::_flush_and_sync_log_core()
   uint64_t runway = log.writer->file->fnode.get_allocated() - log.writer->get_effective_write_pos();
   // ensure runway is big enough, this should be taken care of by _maybe_extend_log,
   // but let's keep this here just in case.
-  ceph_assert(bl.length() <= runway); 
+  ceph_assert(bl.length() <= runway);
 
 
   log.writer->append(bl);
@@ -3317,6 +3318,7 @@ void BlueFS::_release_pending_allocations(vector<interval_set<uint64_t>>& to_rel
 
 int BlueFS::_flush_and_sync_log_LD(uint64_t want_seq)
 {
+
   log.lock.lock();
   dirty.lock.lock();
   if (want_seq && want_seq <= dirty.seq_stable) {
@@ -3326,7 +3328,7 @@ int BlueFS::_flush_and_sync_log_LD(uint64_t want_seq)
     log.lock.unlock();
     return 0;
   }
-  
+
   ceph_assert(want_seq == 0 || want_seq <= dirty.seq_live); // illegal to request seq that was not created yet
   uint64_t seq =_log_advance_seq();
   _consume_dirty(seq);
@@ -3945,7 +3947,7 @@ int BlueFS::_allocate(uint8_t id, uint64_t len,
     need = round_up_to(len, alloc_unit);
     if (!node->extents.empty() && node->extents.back().bdev == id) {
       hint = node->extents.back().end();
-    }   
+    }
     ++alloc_attempts;
     extents.reserve(4);  // 4 should be (more than) enough for most allocations
     auto t0 = mono_clock::now();
@@ -4032,6 +4034,7 @@ int BlueFS::_allocate(uint8_t id, uint64_t len,
       cb(e);
     }
   }
+
   return 0;
 }
 

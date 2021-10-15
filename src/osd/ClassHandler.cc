@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*- 
+// -*- mode:C++; tab-width:8; c-basic-offset:2; indent-tabs-mode:t -*-
 // vim: ts=8 sw=2 smarttab
 
 #include "include/types.h"
@@ -204,8 +204,7 @@ int ClassHandler::_load_class(ClassData *cls)
   return 0;
 }
 
-
-
+// zhou: README,
 ClassHandler::ClassData *ClassHandler::register_class(const char *cname)
 {
   ceph_assert(ceph_mutex_is_locked(mutex));

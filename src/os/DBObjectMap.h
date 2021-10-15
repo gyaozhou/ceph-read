@@ -53,6 +53,7 @@
  * key std::set.  During rm_keys, we copy keys from the parent and update the
  * complete std::set to reflect the change @see rm_keys.
  */
+// zhou: used by filestore only ?
 class DBObjectMap : public ObjectMap {
 public:
 
@@ -383,6 +384,7 @@ private:
     return sys_parent_prefix(*header);
   }
 
+  // zhou:
   class EmptyIteratorImpl : public ObjectMapIteratorImpl {
   public:
     int seek_to_first() override { return 0; }
@@ -439,7 +441,7 @@ private:
 
     /// skips to next valid parent entry
     int next_parent();
-    
+
     /// first parent() >= to
     int lower_bound_parent(const std::string &to);
 
@@ -575,7 +577,7 @@ private:
     }
   };
   friend class RemoveOnDelete;
-};
+}; // zhou: class DBObjectMap
 WRITE_CLASS_ENCODER(DBObjectMap::_Header)
 WRITE_CLASS_ENCODER(DBObjectMap::State)
 

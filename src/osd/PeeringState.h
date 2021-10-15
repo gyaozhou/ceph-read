@@ -264,6 +264,7 @@ struct PeeringCtxWrapper {
   }
 };
 
+// zhou: PG state, not only recovery state.
 /* Encapsulates PG recovery process */
 class PeeringState : public MissingLoc::MappingInfo {
 public:
@@ -2487,6 +2488,6 @@ public:
   void complete_flush();
 
   friend std::ostream &operator<<(std::ostream &out, const PeeringState &ps);
-};
+}; // zhou: class PeeringState
 
 std::ostream &operator<<(std::ostream &out, const PeeringState &ps);

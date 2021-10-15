@@ -39,8 +39,12 @@ enum class op_scheduler_class : uint8_t {
 
 std::ostream& operator<<(std::ostream& out, const op_scheduler_class& class_id);
 
+// zhou: README, OpSchedulerItem is not abstract class, but nested two abstract class:
+//       "class OrderLocker" and "class OpQueueable".
+
 class OpSchedulerItem {
 public:
+
   // Abstraction for operations queueable in the op queue
   class OpQueueable {
   public:
@@ -83,7 +87,7 @@ public:
       return q.print(out);
     }
 
-  };
+  }; // zhou: class OpQueueable
 
 private:
   OpQueueable::Ref qitem;

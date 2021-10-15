@@ -212,6 +212,7 @@ int librados::RadosClient::ping_monitor(const string mon_id, string *result)
   return err;
 }
 
+// zhou: README,
 int librados::RadosClient::connect()
 {
   int err;
@@ -221,6 +222,7 @@ int librados::RadosClient::connect()
     return -EINPROGRESS;
   if (state == CONNECTED)
     return -EISCONN;
+
   state = CONNECTING;
 
   if (!cct->_log->is_started()) {
@@ -228,6 +230,7 @@ int librados::RadosClient::connect()
   }
 
   {
+    // zhou:
     MonClient mc_bootstrap(cct, poolctx);
     err = mc_bootstrap.get_monmap_and_config();
     if (err < 0)
@@ -679,7 +682,8 @@ bool librados::RadosClient::put() {
   refcnt--;
   return (refcnt == 0);
 }
- 
+
+// zhou: README, create pool in sync
 int librados::RadosClient::pool_create(string& name,
 				       int16_t crush_rule)
 {
@@ -696,6 +700,7 @@ int librados::RadosClient::pool_create(string& name,
   ceph::condition_variable cond;
   bool done;
   Context *onfinish = new C_SafeCond(mylock, cond, &done, &reply);
+  // zhou: OSDC
   objecter->create_pool(name, onfinish, crush_rule);
 
   std::unique_lock l{mylock};
@@ -703,6 +708,7 @@ int librados::RadosClient::pool_create(string& name,
   return reply;
 }
 
+// zhou: README, create pool in async
 int librados::RadosClient::pool_create_async(string& name,
 					     PoolAsyncCompletionImpl *c,
 					     int16_t crush_rule)

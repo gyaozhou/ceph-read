@@ -29,7 +29,9 @@
  * excessive requests for more of them are delayed, until some slots are put
  * back, so @p get_current() drops below the limit after fulfills the requests.
  */
+// zhou: README, only one concrete class derived from abstract "class ThrottleInterface".
 class Throttle final : public ThrottleInterface {
+
   CephContext *cct;
   const std::string name;
   PerfCountersRef logger;
@@ -98,7 +100,7 @@ public:
    * total number taken by consumer would exceed the maximum number.
    * @param c number of slots to get
    * @param m new maximum number to set, ignored if it is 0
-   * @returns true if this request is blocked due to the throttling, false 
+   * @returns true if this request is blocked due to the throttling, false
    * otherwise
    */
   bool get(int64_t c = 1, int64_t m = 0);
@@ -125,7 +127,7 @@ public:
     std::lock_guard l(lock);
     _reset_max(m);
   }
-};
+}; // zhou: class Throttle
 
 /**
  * BackoffThrottle

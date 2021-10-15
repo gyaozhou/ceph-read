@@ -77,7 +77,7 @@ if(connection->interceptor) { \
     connection->dispatch_queue->queue_reset(connection); \
     return nullptr; \
   }}}
-  
+
 #else
 #define INTERCEPT(S)
 #endif
@@ -1360,6 +1360,7 @@ CtPtr ProtocolV2::_handle_read_frame_epilogue_main() {
   return handle_read_frame_dispatch();
 }
 
+// zhou: README,
 CtPtr ProtocolV2::handle_message() {
   ldout(cct, 20) << __func__ << dendl;
   ceph_assert(state == THROTTLE_DONE);
@@ -1508,13 +1509,17 @@ CtPtr ProtocolV2::handle_message() {
                     << " " << *message << dendl;
     }
     connection->delay_state->queue(delay_period, message);
+
   } else if (messenger->ms_can_fast_dispatch(message)) {
+
     connection->lock.unlock();
+    // zhou:
     connection->dispatch_queue->fast_dispatch(message);
     connection->recv_start_time = ceph::mono_clock::now();
     connection->logger->tinc(l_msgr_running_fast_dispatch_time,
                              connection->recv_start_time - fast_dispatch_time);
     connection->lock.lock();
+
     // we might have been reused by another connection
     // let's check if that is the case
     if (state != READY) {
@@ -2464,7 +2469,7 @@ CtPtr ProtocolV2::handle_reconnect(ceph::bufferlist &payload)
   auto reconnect = ReconnectFrame::Decode(payload);
 
   ldout(cct, 5) << __func__
-                << " received reconnect:" 
+                << " received reconnect:"
                 << " client_cookie=" << std::hex << reconnect.client_cookie()
                 << " server_cookie=" << reconnect.server_cookie() << std::dec
                 << " gs=" << reconnect.global_seq()

@@ -37,7 +37,7 @@
 
 #include "boost/intrusive/list.hpp"
 
-enum {  
+enum {
   l_kstore_first = 832430,
   l_kstore_state_prepare_lat,
   l_kstore_state_kv_queued_lat,
@@ -585,7 +585,7 @@ public:
     db->compact();
     return 0;
   }
-  
+
 private:
   // --------------------------------------------------------
   // write ops
@@ -688,7 +688,7 @@ private:
 			CollectionRef& d,
 			unsigned bits);
 
-};
+}; // zhou: class KStore
 
 static inline void intrusive_ptr_add_ref(KStore::Onode *o) {
   o->get();

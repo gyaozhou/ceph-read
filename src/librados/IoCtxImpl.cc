@@ -284,6 +284,7 @@ int librados::IoCtxImpl::get_object_pg_hash_position(
   return 0;
 }
 
+// zhou:
 void librados::IoCtxImpl::queue_aio_write(AioCompletionImpl *c)
 {
   get();
@@ -586,16 +587,21 @@ int librados::IoCtxImpl::create(const object_t& oid, bool exclusive)
   return pop;
 }
 
+// zhou:
 int librados::IoCtxImpl::write(const object_t& oid, bufferlist& bl,
 			       size_t len, uint64_t off)
 {
   if (len > UINT_MAX/2)
     return -E2BIG;
+
+  // zhou: setup "op"
   ::ObjectOperation op;
   prepare_assert_ops(&op);
   bufferlist mybl;
   mybl.substr_of(bl, 0, len);
   op.write(off, mybl);
+
+  // zhou: perform "op"
   return operate(oid, &op, NULL);
 }
 
@@ -636,6 +642,7 @@ int librados::IoCtxImpl::writesame(const object_t& oid, bufferlist& bl,
   return operate(oid, &op, NULL);
 }
 
+// zhou: README,
 int librados::IoCtxImpl::operate(const object_t& oid, ::ObjectOperation *o,
 				 ceph::real_time *pmtime, int flags, const jspan_context* otel_trace)
 {
@@ -786,6 +793,7 @@ int librados::IoCtxImpl::aio_operate(const object_t& oid,
   return 0;
 }
 
+// zhou: README,
 int librados::IoCtxImpl::aio_read(const object_t oid, AioCompletionImpl *c,
 				  bufferlist *pbl, size_t len, uint64_t off,
 				  uint64_t snapid, const blkin_trace_info *info)
@@ -816,6 +824,7 @@ int librados::IoCtxImpl::aio_read(const object_t oid, AioCompletionImpl *c,
   return 0;
 }
 
+// zhou: README,
 int librados::IoCtxImpl::aio_read(const object_t oid, AioCompletionImpl *c,
 				  char *buf, size_t len, uint64_t off,
 				  uint64_t snapid, const blkin_trace_info *info)
@@ -937,6 +946,7 @@ int librados::IoCtxImpl::aio_cmpext(const object_t& oid,
   return 0;
 }
 
+// zhou: README,
 int librados::IoCtxImpl::aio_write(const object_t &oid, AioCompletionImpl *c,
 				   const bufferlist& bl, size_t len,
 				   uint64_t off, const blkin_trace_info *info)
@@ -962,6 +972,8 @@ int librados::IoCtxImpl::aio_write(const object_t &oid, AioCompletionImpl *c,
     trace.init("rados write", &objecter->trace_endpoint, info);
 
   c->io = this;
+
+  // zhou:
   queue_aio_write(c);
 
   Objecter::Op *o = objecter->prepare_write_op(
@@ -2226,4 +2238,3 @@ int librados::IoCtxImpl::application_metadata_list(const std::string& app_name,
     });
   return r;
 }
-
